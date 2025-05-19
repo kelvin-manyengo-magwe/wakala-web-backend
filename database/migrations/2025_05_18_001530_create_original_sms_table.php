@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('transactions', function (Blueprint $table) {
-            $table->id();
+        Schema::create('original_sms', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->text('raw_sms');
             $table->timestamps();
         });
     }
@@ -22,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('transactions');
+        Schema::dropIfExists('original_sms');
     }
 };
