@@ -3,7 +3,7 @@
 return [
 
     'messages' => [
-      'dashboard' => 'Dashibodi',
+       'dashboard' => 'Dashibodi',
        'users' => 'Watumiaji',
        'roles' => 'Majukumu',
        'permissions' => 'Ruhusa',

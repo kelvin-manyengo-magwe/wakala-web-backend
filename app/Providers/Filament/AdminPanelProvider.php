@@ -18,6 +18,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\SpatieLaravelTranslatablePlugin;
+use App\Filament\Widgets\AnalyticsDashboard;
+
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -35,6 +37,7 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Red,
                 'danger' => Color::Red,
             ])
+            //->viteTheme('resources/css/filament.css')
             ->renderHook(
            'panels::global-search.after',
                   fn () => view('components.filament.language-switcher.language-switcher')
@@ -48,6 +51,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
+                \App\Filament\Widgets\AnalyticsDashboard::class,
 
             ])
             ->middleware([

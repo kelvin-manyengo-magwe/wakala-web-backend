@@ -17,7 +17,11 @@ class TransactionController extends Controller
 {
     public function sync(Request $request)
     {
-        $request->validate([
+
+          $user = $request->user();  //getting the autheniticated user\
+
+
+        /*$request->validate([
             'device_id' => 'required|uuid',
             'transactions' => 'required|array',
             'transactions.*.customer_name' => 'required|string',
@@ -29,7 +33,7 @@ class TransactionController extends Controller
             'transactions.*.commission' => 'required|numeric',
             'transactions.*.float' => 'required|numeric',
             'transactions.*.raw' => 'required'
-        ]);
+        ]);*/
 
         $syncedCount = 0;
 
@@ -82,7 +86,8 @@ class TransactionController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => "$syncedCount transactions synced"
+            'message' => "$syncedCount transactions synced",
+            'user_id' => $user->id,
         ]);
     }
 
