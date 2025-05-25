@@ -10,7 +10,7 @@ Route::get('/', function () {
 // Test route
 Route::get('/test-sms', function() {
     $smsService = new App\Services\SmsService();
-    $success = $smsService->sendSms('255710852259', 'Your login credentials.');
+    $success = $smsService->sendSms('255653434522', 'Your login credentials.');
     return response()->json(['success' => $success]);
 });
 

@@ -115,39 +115,6 @@ class UserResource extends Resource
     }
 
 
-    protected function afterCreate(): void
-  {
-      Log::debug("afterCreate hook triggered");
-      
-      // Get the password entered by admin
-      $password = $this->data['password'];
-      $phoneNumber = $this->data['phone_no'];
-
-      Log::debug("Starting SMS sending process", [
-          'phone' => $phoneNumber,
-          'user_id' => $this->record->id
-      ]);
-
-      try {
-          $smsService = new SmsService();
-          $result = $smsService->sendPasswordSms($phoneNumber, $password);
-
-          Log::debug("SMS service response", ['result' => $result]);
-
-          if (!$result) {
-              throw new \Exception('SMS service returned failure status');
-          }
-
-          Log::info("SMS sent successfully to {$phoneNumber}");
-
-      } catch (\Exception $e) {
-          Log::error("SMS sending failed", [
-              'phone' => $phoneNumber,
-              'error' => $e->getMessage(),
-              'trace' => $e->getTraceAsString()
-          ]);
-      }
-  }
 
 
     public static function getRelations(): array

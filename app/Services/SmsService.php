@@ -28,19 +28,31 @@ class SmsService
         $formattedNumber = $this->formatPhoneNumber($phoneNumber);
 
         $payload = [
-            //'source_addr' => 'INFO', // Default sender ID (or omit to use Beem's default)
-            'encoding' => 0, // 0 for GSM-7 (normal text), 1 for Unicode
+          'source_addr' => config('services.beem.sender_id', 'INFO'), // Fallback to 'INFO' if not set
+          'encoding' => 0, // 0 for GSM-7 (normal text), 1 for Unicode
+          'schedule_time' => '',
             'message' => $message,
+
             'recipients' => [
-                ['recipient_id' => 1, 'dest_addr' => $formattedNumber]
-            ]
+                                  [
+                                      'recipient_id' => '1',
+                                      'dest_addr'=> $formattedNumber
+                                  ],
+                            ]
         ];
 
         try {
-            $response = Http::withHeaders([
+            /*$response = Http::withHeaders([
                 'Authorization' => 'Basic ' . base64_encode("{$this->apiKey}:{$this->secretKey}"),
                 'Content-Type' => 'application/json',
-            ])->post($this->baseUrl, $payload);
+            ])->post($this->baseUrl, $payload); */
+
+            Log::info('Payload:', $payload);  //logs to see what application sends
+
+
+            $response = Http::withBasicAuth($this->apiKey, $this->secretKey)
+                          ->asJson()
+                          ->post($this->baseUrl, $payload);
 
             if ($response->successful()) {
                 Log::info('Beem SMS sent', ['response' => $response->json()]);
@@ -58,6 +70,7 @@ class SmsService
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
+
             return false;
         }
     }
