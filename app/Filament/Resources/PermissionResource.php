@@ -32,6 +32,11 @@ class PermissionResource extends Resource
             ]);
     }
 
+    public static function shouldRegisterNavigation(): bool
+      {
+          return false; // This hides ONLY the Permissions resource
+      }
+
     public static function table(Table $table): Table
     {
         return $table

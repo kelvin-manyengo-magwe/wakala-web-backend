@@ -37,6 +37,7 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Red,
                 'danger' => Color::Red,
             ])
+
             //->viteTheme('resources/css/filament.css')
             ->renderHook(
            'panels::global-search.after',

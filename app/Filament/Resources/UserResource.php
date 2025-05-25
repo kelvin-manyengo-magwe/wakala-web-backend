@@ -40,6 +40,35 @@ class UserResource extends Resource
                     ->required()
                     ->maxLength(255),
 
+
+                    Forms\Components\TextInput::make('phone_no')
+                      ->label('Phone Number')
+                      ->prefix('+255')
+                      ->tel()
+                      ->required()
+                      ->unique(ignoreRecord: true)
+                      ->mask('999 999 999')
+                      ->placeholder('712 345 678')
+                      ->afterStateUpdated(function ($state, $set) {
+                          $digits = substr(preg_replace('/[^0-9]/', '', $state), 0, 9);
+                          $set('phone_no', $digits);
+                      })
+                      ->dehydrateStateUsing(function ($state) {
+                          $digits = substr(preg_replace('/[^0-9]/', '', $state), 0, 9);
+                          return '+255' . $digits;
+                      })
+                      ->rules([
+                          function () {
+                              return function (string $attribute, $value, \Closure $fail) {
+                                  $digits = preg_replace('/[^0-9]/', '', $value);
+
+                                  if (strlen($digits) !== 9) {
+                                      $fail('Phone number must have exactly 9 digits after +255');
+                                  }
+                              };
+                          }
+                      ]),
+
                     Select::make('roles')
                             ->relationship('roles', 'name')
                             ->multiple()
@@ -56,17 +85,17 @@ class UserResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('email_verified_at')
-                    ->dateTime()
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('phone_no')
+                    ->label('Phone Number')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
+                  //  ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    //->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //
