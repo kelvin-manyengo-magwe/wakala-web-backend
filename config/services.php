@@ -13,11 +13,11 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
-    'africastalking' => [
-    'username' => env('AFRICASTALKING_USERNAME'),
-    'key' => env('AFRICASTALKING_API_KEY'),
-    'sender_id' => env('AFRICASTALKING_SENDER_ID'),
-      ],
+    'beem' => [
+    'api_key' => env('BEEM_API_KEY'),
+    'secret_key' => env('BEEM_SECRET_KEY'),
+    //'sender_id' => env('BEEM_SENDER_ID'),
+    ],
 
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),

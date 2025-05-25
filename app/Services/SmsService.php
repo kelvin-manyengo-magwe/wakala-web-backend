@@ -2,79 +2,77 @@
 
 namespace App\Services;
 
-use AfricasTalking\SDK\AfricasTalking;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-
 
 class SmsService
 {
-    protected $sms;
+    protected $apiKey;
+    protected $secretKey;
+    protected $baseUrl = 'https://apisms.beem.africa/v1/send';
 
     public function __construct()
     {
+        $this->apiKey = config('services.beem.api_key');
+        $this->secretKey = config('services.beem.secret_key');
 
-      $apiKey = config('services.africastalking.key');
+        if (empty($this->apiKey)) {
+            throw new \RuntimeException("Beem API key is missing!");
+        }
 
-          if (empty($apiKey)) {
-              throw new \RuntimeException("Africa's Talking API key is missing!");
-          }
-
-
-          Log::debug("Initializing Africa's Talking SDK", [
-          'username' => config('services.africastalking.username'),
-          'key' => config('services.africastalking.key') ? '***' : 'MISSING'
-            ]);
-
-        $this->sms = (new AfricasTalking(
-            config('services.africastalking.username'),
-            config('services.africastalking.key')
-        ))->sms();
     }
 
-            public function sendPasswordSms($phoneNumber, $password)
-              {
 
+    public function sendSms($phoneNumber, $message)
+    {
+        $formattedNumber = $this->formatPhoneNumber($phoneNumber);
 
-            try {
-                $formattedNumber = $this->formatPhoneNumber($phoneNumber);
-                Log::debug("Formatting phone number", [
-                    'original' => $phoneNumber,
-                    'formatted' => $formattedNumber
-                ]);
+        $payload = [
+            //'source_addr' => 'INFO', // Default sender ID (or omit to use Beem's default)
+            'encoding' => 0, // 0 for GSM-7 (normal text), 1 for Unicode
+            'message' => $message,
+            'recipients' => [
+                ['recipient_id' => 1, 'dest_addr' => $formattedNumber]
+            ]
+        ];
 
-                $message = "Your Wakala login details:\nPhone: {$formattedNumber}\nPassword: {$password}";
-                Log::debug("Preparing SMS message", ['message' => $message]);
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Basic ' . base64_encode("{$this->apiKey}:{$this->secretKey}"),
+                'Content-Type' => 'application/json',
+            ])->post($this->baseUrl, $payload);
 
-                $response = $this->sms->send([
-                    'to' => $formattedNumber,
-                    'message' => $message,
-                    //'from' => config('services.africastalking.sender_id'),
-                    'enqueue' => false // Send immediately
-                ]);
-
-                Log::debug("Africa's Talking API response", ['response' => $response]);
-
-                return $response['status'] === 'success';
-
-            } catch (\Exception $e) {
-                Log::error('SMS sending failed', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
-                return false;
+            if ($response->successful()) {
+                Log::info('Beem SMS sent', ['response' => $response->json()]);
+                return true;
             }
+
+            Log::error('Beem SMS failed', [
+                'status' => $response->status(),
+                'error' => $response->body()
+            ]);
+            return false;
+
+        } catch (\Exception $e) {
+            Log::error('Beem API error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
         }
+    }
 
     protected function formatPhoneNumber($phoneNumber)
     {
+        // Beem requires format: 255XXXXXXXXX (no + sign)
         $phoneNumber = preg_replace('/[^0-9]/', '', $phoneNumber);
 
         if (str_starts_with($phoneNumber, '0')) {
-            return '+255' . substr($phoneNumber, 1);
+            return '255' . substr($phoneNumber, 1); // Convert 0712... to 255712...
         }
 
-        if (!str_starts_with($phoneNumber, '+255')) {
-            return '+255' . $phoneNumber;
+        if (str_starts_with($phoneNumber, '+255')) {
+            return substr($phoneNumber, 1); // Remove + prefix
         }
 
         return $phoneNumber;
