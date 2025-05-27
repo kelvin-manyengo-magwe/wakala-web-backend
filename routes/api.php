@@ -4,6 +4,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Api\MobileAuthController;
+
+
+Route::post('/mobile/login', [MobileAuthController::class, 'login']);
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
