@@ -26,7 +26,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        'password',
+        'password', 'phone_no', 'location', 'till_no',
     ];
 
     /**
@@ -56,6 +56,16 @@ class User extends Authenticatable
    {
        return $this->hasRole('admin');
    }
+
+         public function airtelTransactions()
+            {
+                return $this->hasMany(AirtelTransaction::class);
+            }
+
+      public function halotelTransactions()
+          {
+              return $this->hasMany(HalotelTransaction::class);
+          }
 
        /*public function roles()
             {

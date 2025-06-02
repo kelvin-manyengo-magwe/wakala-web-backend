@@ -1,112 +1,65 @@
 <?php
-
 namespace App\Filament\Widgets;
 
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Illuminate\Support\Str;
-use App\Models\Transaction;
-use Illuminate\Support\Facades\DB;
-use App\Models\Customer;
-use App\Models\Device;
-use Carbon\Carbon;
+use App\Models\AirtelTransaction;
+use App\Models\HalotelTransaction;
 use App\Models\User;
-
+use Carbon\Carbon;
 
 class AnalyticsDashboard extends BaseWidget
 {
+    protected static ?string $pollingInterval = '60s'; // e.g. refresh every 60 seconds
+    protected static bool $isLazy = true;
 
-          protected static ?string $pollingInterval = null;
-          protected static bool $isLazy = true;
-
-
-
-          protected function getStats(): array {
-       if (!$this->isDataLoaded()) {
-           return $this->getLoadingStats();
-       }
-
-       return $this->getRealStats();
-   }
-
-   protected function getLoadingStats(): array
+    protected function getStats(): array
     {
+        // Airtel Stats
+        $airtelTotalAmount = AirtelTransaction::sum('amount');
+        $airtelCommission = AirtelTransaction::sum('commission'); // Example
+        $airtelCount = AirtelTransaction::count();
+        $latestAirtelSync = AirtelTransaction::latest('processed_at')->value('processed_at');
+
+        // Halotel Stats
+        $halotelTotalAmount = HalotelTransaction::sum('amount');
+        $halotelCommission = HalotelTransaction::sum('commission'); // Example
+        $halotelCount = HalotelTransaction::count();
+        $latestHalotelSync = HalotelTransaction::latest('processed_at')->value('processed_at');
+
+        // Overall Stats
+        $totalAmount = $airtelTotalAmount + $halotelTotalAmount;
+        $totalCommission = $airtelCommission + $halotelCommission; // Example
+        $totalTransactions = $airtelCount + $halotelCount;
+        $wakalaCount = User::count(); // Or filter by role: User::role('wakala')->count();
+
+        $latestSyncTimes = collect([$latestAirtelSync, $latestHalotelSync])->filter()->map(fn($time) => Carbon::parse($time))->max();
+        $syncTimeText = $latestSyncTimes ? __('dashboard.minutes_ago', ['minutes' => round($latestSyncTimes->diffInMinutes(now()))]) : __('dashboard.no_recent_sync');
+
         return [
-            Stat::make('Taarifa zinapakia...', '')
-                ->description('')
-                ->color('gray')
-                ->icon('heroicon-o-arrow-path')
-                ->extraAttributes([
-                    'class' => 'fi-stats-overview-stat-loading',
-                    'style' => 'grid-column: 1 / -1; text-align: center;'
-                ])
+            // Overall Summary First
+            Stat::make(__('dashboard.total_revenue'), 'Tsh ' . number_format($totalAmount))
+                ->description(__('dashboard.total_transactions') .': '. number_format($totalTransactions))
+                ->color('primary')
+                ->chart([7, 2, 10, 3, 15, 4, 17]), // Example chart data
+            Stat::make(__('dashboard.total_commission_earned'), 'Tsh ' . number_format($totalCommission)) // Example
+                 ->description(__('dashboard.this_month')) // Could be dynamic
+                 ->color('success'),
+
+            // Airtel Specific
+            Stat::make(__('dashboard.airtel_revenue'), 'Tsh ' . number_format($airtelTotalAmount))
+                ->description(__('dashboard.airtel_transactions') . ': ' . number_format($airtelCount))
+                ->color('red'), // Assuming Airtel is red
+
+            // Halotel Specific
+            Stat::make(__('dashboard.halotel_revenue'), 'Tsh ' . number_format($halotelTotalAmount))
+                ->description(__('dashboard.halotel_transactions') . ': ' . number_format($halotelCount))
+                ->color('green'), // Example color for Halotel
+
+            Stat::make(__('dashboard.wakala_count'), number_format($wakalaCount))
+                 ->color('warning'),
+            Stat::make(__('dashboard.last_sync'), $syncTimeText)
+                ->color('gray'),
         ];
-    }
-
-
-
-    protected function getRealStats(): array
-{
-    $amana = Transaction::sum('amount'); // Total deposits or transactions
-
-    $salio = Transaction::latest()->value('float'); // Last known float
-    $faida = $amana;
-
-    $jumla = Transaction::count(); // Total transactions
-    $wakala = User::count(); // Total devices/wakala
-
-    // Latest transaction sync time (created_at of latest transaction)
-    $lastSynced = Transaction::latest()->value('created_at');
-    $syncTime = $lastSynced
-        ?  ' Dakika '. round(Carbon::parse($lastSynced)->diffInMinutes(now())) .' zilizopita'
-        : 'Hakuna';
-
-
-
-    return [
-        Stat::make('Jumla ya Amana', 'Tsh ' . number_format($amana))
-
-            ->color('success'),
-
-
-
-        Stat::make('Salio la Sasa', 'Tsh ' . number_format($salio))
-
-            ->color('success'),
-
-        Stat::make('Faida ya Wiki', 'Tsh ' . number_format($faida))
-
-            ->color('success'),
-
-        Stat::make('Jumla ya Miamala', number_format($jumla))
-
-            ->color('success'),
-
-        Stat::make('Wakala Waliopo', number_format($wakala))
-
-            ->color('danger'),
-
-        Stat::make('Usawazishwaji wa Miamala', $syncTime)
-            ->description('')
-            ->color('info'),
-
-
-    ];
-}
-
-    protected function isDataLoaded(): bool
-    {
-        // Implement your actual data loading check
-        // For demo, we'll simulate a 1.5 second load time
-        if (Str::contains(request()->url(), 'localhost')) {
-            usleep(1500000); // 1.5 seconds delay for local testing
-        }
-
-        return true;
-    }
-
-    public static function getSort(): int
-    {
-        return 1;
     }
 }

@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\Select;
 use App\Services\SmsService;
 use Illuminate\Support\Facades\Log;
+use Filament\Forms\Components\TextInput;
 
 
 class UserResource extends Resource
@@ -73,6 +74,13 @@ class UserResource extends Resource
                           }
                       ]),
 
+                    TextInput::make('location')
+                        ->label(__('Location')),
+
+                    TextInput::make('till_no')
+                        ->label(__('Till no'))
+                        ->unique(ignoreRecord: true),
+
                     Select::make('roles')
                             ->relationship('roles', 'name')
                             ->multiple()
@@ -91,6 +99,12 @@ class UserResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone_no')
                     ->label('Phone Number')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('location')
+                    ->label(__('Location'))
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('till_no')
+                    ->label(__('till_no'))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
