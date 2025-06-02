@@ -21,19 +21,7 @@ class TransactionController extends Controller
           $user = $request->user();  //getting the autheniticated user\
 
 
-        /*$request->validate([
-            'device_id' => 'required|uuid',
-            'transactions' => 'required|array',
-            'transactions.*.customer_name' => 'required|string',
-            'transactions.*.customer_no' => 'required|string',
-            'transactions.*.ref_no' => 'required|string',
-            'transactions.*.date' => 'required|date',
-            'transactions.*.amount' => 'required|numeric',
-            'transactions.*.type' => 'required|string',
-            'transactions.*.commission' => 'required|numeric',
-            'transactions.*.float' => 'required|numeric',
-            'transactions.*.raw' => 'required'
-        ]);*/
+
 
         $syncedCount = 0;
 
