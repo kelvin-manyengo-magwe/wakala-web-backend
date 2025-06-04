@@ -10,6 +10,7 @@
         "africastalking/africastalking": "^3.0",
         "filament/filament": "^3.0",
         "filament/spatie-laravel-translatable-plugin": "^3.3",
+        "flowframe/laravel-trend": "^0.4.0",
         "jenssegers/mongodb": "^5.4",
         "laravel/framework": "^12.0",
         "laravel/reverb": "^1.5",

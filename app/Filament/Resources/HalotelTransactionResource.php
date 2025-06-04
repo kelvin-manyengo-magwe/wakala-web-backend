@@ -10,12 +10,19 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
+use Illuminate\Support\HtmlString;
 
 class HalotelTransactionResource extends Resource
 {
     protected static ?string $model = HalotelTransaction::class;
-    protected static ?string $navigationIcon = 'heroicon-o-signal'; // Chagua ikoni inayofaa
+    protected static ?string $navigationIcon = ''; // Chagua ikoni inayofaa
     protected static ?int $navigationSort = 11;
+
+    public static function getNavigationIcon(): string | HtmlString | null
+    {
+        $logoUrl = asset('images/mno/halo-pesa-logo.png'); // Adjust path & filename
+        return new HtmlString('<img src="' . $logoUrl . '" alt="Halotel Icon" class="w-5 h-5 object-contain rtl:ml-2">');
+    }
 
     public static function getNavigationGroup(): ?string
     {

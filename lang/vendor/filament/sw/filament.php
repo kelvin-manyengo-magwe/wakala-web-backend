@@ -4,7 +4,8 @@ return [
 
     'messages' => [
        'dashboard' => 'Dashibodi',
-       'users' => 'Watumiaji',
+       'users' => 'Mawakala',
+       'user' => 'Wakala',
        'roles' => 'Majukumu',
        'permissions' => 'Ruhusa',
        'save' => 'Hifadhi',

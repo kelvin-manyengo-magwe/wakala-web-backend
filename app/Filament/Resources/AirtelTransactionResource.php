@@ -10,12 +10,19 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
+use Illuminate\Support\HtmlString;
 
 class AirtelTransactionResource extends Resource
 {
     protected static ?string $model = AirtelTransaction::class;
-    protected static ?string $navigationIcon = 'heroicon-o-credit-card'; // Chagua ikoni inayofaa
+    protected static ?string $navigationIcon = ''; // Chagua ikoni inayofaa
     protected static ?int $navigationSort = 10;
+
+    public static function getNavigationIcon(): string | HtmlString | null // Return type can be HtmlString
+    {
+        $logoUrl = asset('images/mno/airtel-money-logo.png'); // Adjust path & filename
+        return new HtmlString('<img src="' . $logoUrl . '" alt="Airtel Icon" class="w-5 h-5 object-contain rtl:ml-2">');
+    }
 
     public static function getNavigationGroup(): ?string
     {

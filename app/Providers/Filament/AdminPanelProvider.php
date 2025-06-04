@@ -19,12 +19,20 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\SpatieLaravelTranslatablePlugin;
 use App\Filament\Widgets\AnalyticsDashboard;
+use App\Filament\Widgets\SummaryStatsOverviewWidget;
+use App\Filament\Widgets\TransactionTrendChartWidget;
+use App\Filament\Widgets\ProfitCommissionChartWidget;
+use App\Filament\Widgets\RecentTransactionsTableWidget;
+use Illuminate\Support\HtmlString;
+
 
 
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
+        $logoPath = asset('images/logo/wakala-logo.jpg');
+
         return $panel
             ->default()
             ->id('admin')
@@ -49,11 +57,15 @@ class AdminPanelProvider extends PanelProvider
                 Pages\Dashboard::class,
 
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            //->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
                 \App\Filament\Widgets\AnalyticsDashboard::class,
-
+                \App\Filament\Widgets\SummaryStatsOverviewWidget::class,
+                \App\Filament\Widgets\TransactionTrendChartWidget::class,
+                \App\Filament\Widgets\ProfitCommissionChartWidget::class,
+                \App\Filament\Widgets\MnoSharePieChartWidget::class,
+                \App\Filament\Widgets\RecentTransactionsTableWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

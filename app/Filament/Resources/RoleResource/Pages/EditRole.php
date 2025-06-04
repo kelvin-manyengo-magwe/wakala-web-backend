@@ -16,4 +16,6 @@ class EditRole extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    public function getTitle(): string { return 'Hariri Jukumu la Mtumiaji: ' . $this->record->name; }
 }

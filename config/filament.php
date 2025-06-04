@@ -68,6 +68,8 @@ return [
     | After changing the path, you should run `php artisan filament:cache-components`.
     |
     */
+    'locale' => 'sw',
+
 
     'cache_path' => base_path('bootstrap/cache/filament'),
 
