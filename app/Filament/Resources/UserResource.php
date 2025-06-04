@@ -31,23 +31,26 @@ class UserResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
+                    ->label('Jina')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('email')
+                    ->label('Barua Pepe')
                     ->email()
-                    ->required()
+                    //->required()
                     ->maxLength(255),
                 //Forms\Components\DateTimePicker::make('email_verified_at'),
 
                 Forms\Components\TextInput::make('password')
+                    ->label('Neno Siri')
                     ->password()
                     ->required()
-                    ->helperText('This password will be sent via SMS to wakala')
+                    ->helperText('Nenosiri hili litatumwa kwa SMS kwa wakala')
                     ->maxLength(255),
 
 
                     Forms\Components\TextInput::make('phone_no')
-                      ->label('Phone Number')
+                      ->label('Nambari ya Simu')
                       ->prefix('+255')
                       ->tel()
                       ->required()
@@ -68,24 +71,28 @@ class UserResource extends Resource
                                   $digits = preg_replace('/[^0-9]/', '', $value);
 
                                   if (strlen($digits) !== 9) {
-                                      $fail('Phone number must have exactly 9 digits after +255');
+                                      $fail('Nambari ya simu lazima iwe na tarakimu 9 baada ya +255');
                                   }
                               };
                           }
                       ]),
 
                     TextInput::make('location')
-                        ->label(__('Location')),
+                        ->label(__('Mahali')),
 
                     TextInput::make('till_no')
-                        ->label(__('Till no'))
+                        ->label(__('Namba ya Till'))
                         ->unique(ignoreRecord: true),
 
                     Select::make('roles')
+                            ->label('Majukumu')
                             ->relationship('roles', 'name')
                             ->multiple()
                             ->preload()
-                            ->visible(fn() => auth()->user()->hasRole('admin')),
+                            /*->visible(function() {   //disabled the admin role cause web is default admin role
+                                          \Log::debug('User has admin role? '. (auth()->user()->hasRole('admin') ? 'Yes' : 'No'));
+                                          return auth()->user()->hasRole('admin');
+                                      })*/,
             ]);
     }
 
