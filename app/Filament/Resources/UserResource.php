@@ -131,6 +131,7 @@ class UserResource extends Resource
 
 
 
+
     public static function getRelations(): array
     {
         return [
@@ -146,4 +147,20 @@ class UserResource extends Resource
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
     }
+
+    public static function getNavigationLabel(): string
+      {
+          return __('Mawakala');
+      }
+
+    public static function getModelLabel(): string
+        {
+            return __('Wakala');
+        }
+
+    public static function getPluralModelLabel(): string
+        {
+            return __('Mawakala');
+        }
+
 }
