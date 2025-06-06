@@ -6,9 +6,8 @@ use Filament\Widgets\ChartWidget;
 use App\Models\AirtelTransaction;
 use App\Models\HalotelTransaction;
 use Carbon\Carbon;
-use Flowframe\Trend\Trend;
-use Flowframe\Trend\TrendValue;
-use Illuminate\Support\Facades\Config; // To get app.timezone
+use Carbon\CarbonPeriod; // To iterate over dates
+use Illuminate\Support\Facades\Config;
 
 class TransactionTrendChartWidget extends ChartWidget
 {
@@ -19,66 +18,59 @@ class TransactionTrendChartWidget extends ChartWidget
 
     protected function getData(): array
     {
-        // Use the application's timezone for consistency
-        $appTimezone = Config::get('app.timezone', 'UTC'); // Default to UTC if not set
+        $appTimezone = Config::get('app.timezone', 'UTC');
+        $endDate = Carbon::now($appTimezone)->startOfDay(); // Today, just the date part for iteration
+        $startDate = $endDate->copy()->subDays(29);    // 29 days before today = 30 days total inclusive
 
-        // Define the overall period for the chart
-        $endDate = Carbon::now($appTimezone)->endOfDay(); // Today, end of day in app timezone
-        $startDate = Carbon::now($appTimezone)->subDays(29)->startOfDay(); // 30 days ago, start of day
+        $labelsForChart = [];
+        $airtelDailyTransactionCounts = [];
+        $halotelDailyTransactionCounts = [];
 
-        // Helper to get trend data
-        $getTrendData = function ($modelClass) use ($startDate, $endDate) {
-            return Trend::model($modelClass)
-                ->between($startDate, $endDate)
-                ->perDay() // This should aggregate by the date part of 'processed_at'
-                ->dateColumn('processed_at') // Explicitly specify the date column
-                ->count();
-        };
+        $period = CarbonPeriod::create($startDate, $endDate);
 
-        $airtelTrend = $getTrendData(AirtelTransaction::class);
-        $halotelTrend = $getTrendData(HalotelTransaction::class);
+        // Custom Swahili Month Abbreviation Map (if translatedFormat remains problematic)
+        $swahiliMonths = [
+            1 => 'Jan', 2 => 'Feb', 3 => 'Mac', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
+            7 => 'Jul', 8 => 'Ago', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des',
+        ];
 
-        // Create a complete list of dates for the labels (from startDate to endDate)
-        $dateLabels = [];
-        $currentDate = $startDate->copy();
-        while ($currentDate->lte($endDate)) {
-            $dateLabels[$currentDate->toDateString()] = $currentDate->isoFormat('D MMM');
-            $currentDate->addDay();
+        foreach ($period as $date) {
+            $dateString = $date->toDateString(); // YYYY-MM-DD for queries
+
+            // Generate Label: e.g., "04 Jun"
+            $labelsForChart[] = $date->format('d') . ' ' . ($swahiliMonths[$date->month] ?? $date->format('M'));
+
+            // Calculate Airtel transaction count for this specific day
+            $airtelCountForDay = AirtelTransaction::whereDate('processed_at', $dateString)
+                                                  ->count();
+            $airtelDailyTransactionCounts[] = $airtelCountForDay;
+
+            // Calculate Halotel transaction count for this specific day
+            $halotelCountForDay = HalotelTransaction::whereDate('processed_at', $dateString)
+                                                   ->count();
+            $halotelDailyTransactionCounts[] = $halotelCountForDay;
         }
-
-        // Map trend data to the complete list of dates, filling in 0 for missing days
-        $mapTrendToLabels = function ($trend, $allDateLabels) {
-            $trendData = $trend->keyBy(fn (TrendValue $value) => Carbon::parse($value->date)->toDateString())
-                               ->map(fn (TrendValue $value) => $value->aggregate);
-
-            $dataSet = [];
-            foreach (array_keys($allDateLabels) as $dateString) {
-                $dataSet[] = $trendData->get($dateString, 0); // Default to 0 if no data for that day
-            }
-            return $dataSet;
-        };
-
-        $airtelData = $mapTrendToLabels($airtelTrend, $dateLabels);
-        $halotelData = $mapTrendToLabels($halotelTrend, $dateLabels);
 
         return [
             'datasets' => [
                 [
                     'label' => 'Miamala ya Airtel',
-                    'data' => $airtelData,
-                    'borderColor' => 'rgb(220, 38, 38)',
+                    'data' => $airtelDailyTransactionCounts,
+                    'borderColor' => 'rgb(220, 38, 38)', // Red for Airtel
                     'backgroundColor' => 'rgba(220, 38, 38, 0.3)',
+                    'tension' => 0.2,
                     'fill' => 'start',
                 ],
                 [
                     'label' => 'Miamala ya Halotel',
-                    'data' => $halotelData,
-                    'borderColor' => 'rgb(22, 163, 74)',
-                    'backgroundColor' => 'rgba(22, 163, 74, 0.3)',
+                    'data' => $halotelDailyTransactionCounts,
+                    'borderColor' => '#ebcfc6', // Green for Halotel
+                    'backgroundColor' => '#ebcfc6',
+                    'tension' => 0.2,
                     'fill' => 'start',
                 ],
             ],
-            'labels' => array_values($dateLabels), // Use the formatted date strings as labels
+            'labels' => $labelsForChart,
         ];
     }
 

@@ -36,7 +36,7 @@ class MnoSharePieChartWidget extends ChartWidget
                     'data' => [$airtelTotalTransactions, $halotelTotalTransactions], // Or use percentages: [$airtelPercentage, $halotelPercentage]
                     'backgroundColor' => [
                         'rgba(220, 38, 38, 0.8)', // Red-ish for Airtel
-                        'rgba(22, 163, 74, 0.8)',  // Green-ish for Halotel
+                        '#ebcfc6',  // Green-ish for Halotel
                     ],
                     'borderColor' => [
                         'rgb(255, 255, 255)', // White border for segments

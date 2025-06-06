@@ -53,7 +53,7 @@ class AirtelTransactionResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('ref_no')
-                    ->label('Namba ya Unukuzi')
+                    ->label('Utambulisho wa muamala')
                     ->disabledOn('view')
                     ->required(),
                 Forms\Components\DateTimePicker::make('date')

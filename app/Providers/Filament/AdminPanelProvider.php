@@ -61,11 +61,11 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 Widgets\AccountWidget::class,
                 \App\Filament\Widgets\AnalyticsDashboard::class,
-                \App\Filament\Widgets\SummaryStatsOverviewWidget::class,
-                \App\Filament\Widgets\TransactionTrendChartWidget::class,
-                \App\Filament\Widgets\ProfitCommissionChartWidget::class,
-                \App\Filament\Widgets\MnoSharePieChartWidget::class,
-                \App\Filament\Widgets\RecentTransactionsTableWidget::class,
+              //  \App\Filament\Widgets\SummaryStatsOverviewWidget::class,
+              //  \App\Filament\Widgets\TransactionTrendChartWidget::class,
+              //  \App\Filament\Widgets\ProfitCommissionChartWidget::class,
+              //  \App\Filament\Widgets\MnoSharePieChartWidget::class,
+              //  \App\Filament\Widgets\RecentTransactionsTableWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

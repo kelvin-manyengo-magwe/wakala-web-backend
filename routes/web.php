@@ -26,4 +26,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+Route::get('/test-widget-class', function () {
+    $classExists = class_exists(\App\Filament\Widgets\SummaryStatsOverviewWidget::class);
+    if ($classExists) {
+        return "SUCCESS: Class App\Filament\Widgets\SummaryStatsOverviewWidget FOUND by PHP.";
+    } else {
+        return "ERROR: Class App\Filament\Widgets\SummaryStatsOverviewWidget NOT FOUND by PHP. Check path, name, namespace, and run composer dump-autoload.";
+    }
+});
+
 require __DIR__.'/auth.php';

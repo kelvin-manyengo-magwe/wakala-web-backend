@@ -5,17 +5,11 @@ namespace App\Filament\Widgets;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
-use App\Models\AirtelTransaction;
-use App\Models\HalotelTransaction;
-// use App\Models\TransactionType; // Keep if used in future modifications
-// use App\Models\User;           // Keep if used in future modifications
-// use Illuminate\Database\Eloquent\Builder; // Keep if used in future modifications
-
-// Import the correct Collection type
-use Illuminate\Database\Eloquent\Collection as EloquentCollection; // <<<< CHANGE/ADD THIS
-use Illuminate\Support\Collection; // This can be removed if not used for other things
-
-// use Carbon\Carbon; // Keep if used
+use App\Models\AirtelTransaction; // Use this as the base model for the query context
+use App\Models\HalotelTransaction; // Only needed for getTableRecords
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+// use Carbon\Carbon;
 
 class RecentTransactionsTableWidget extends BaseWidget
 {
@@ -26,9 +20,21 @@ class RecentTransactionsTableWidget extends BaseWidget
     protected int $transactionsLimit = 10;
 
     /**
-     * Changed return type to EloquentCollection
+     * Define a base query.
+     * This method is required by the TableWidget.
+     * Even though getTableRecords() provides the final displayed dataset,
+     * this query() method provides context for the table, such as the base model.
      */
-    public function getTableRecords(): EloquentCollection // <<<< CHANGE THIS RETURN TYPE
+    protected function query(): Builder // <<<< RENAMED FROM getTableQuery to query
+    {
+        // Provide a query from one of the transaction models.
+        // This sets the "model context" for the table, even if getTableRecords
+        // ultimately supplies a different set of data.
+        // This helps Filament with things like action model binding.
+        return AirtelTransaction::query()->latest()->limit(10);
+    }
+
+    public function getTableRecords(): EloquentCollection
     {
         $airtelRecent = AirtelTransaction::with(['type', 'user', 'customer'])
             ->latest('processed_at')
@@ -50,30 +56,17 @@ class RecentTransactionsTableWidget extends BaseWidget
                 return $txn;
             });
 
-        // Merge and sort the collections. The result of concat and sortByDesc on Eloquent collections
-        // is typically still an Eloquent Collection if all items are Eloquent models.
-        // If it degrades to a base Support Collection, we might need to cast or wrap.
         $allRecentTransactions = $airtelRecent->concat($halotelRecent)
                                     ->sortByDesc('transaction_date')
-                                    ->take($this->transactionsLimit * 1.5); // Taking slightly more for variety
-                                    // ->values(); // Ensure keys are reset for collection methods if needed
+                                    ->take(intval($this->transactionsLimit * 1.5));
 
-        // Ensure the final result is an EloquentCollection
-        // If $allRecentTransactions is a base Support\Collection, convert it.
-        // However, Eloquent's concat/sortByDesc usually preserve the EloquentCollection type
-        // if the underlying items are Eloquent models.
-        // If you face issues where it becomes a base Collection, you can do:
-        // return new EloquentCollection($allRecentTransactions->all());
-
-        // Let's assume $allRecentTransactions is already an EloquentCollection because its items are models
-        // If it is actually a base Support\Collection due to merging of different model types (though here they are mapped to similar structure),
-        // a simple cast like below might not be enough.
-        // For now, directly returning is usually fine if the contents are homogeneous enough.
-        return new EloquentCollection($allRecentTransactions); // Explicitly cast to EloquentCollection
+        return new EloquentCollection($allRecentTransactions);
     }
 
     public function table(Table $table): Table
     {
+        // Since getTableRecords() provides the records, we don't call $table->query() here.
+        // The query() method defined above serves as the base for Filament.
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('transaction_date')
@@ -121,6 +114,7 @@ class RecentTransactionsTableWidget extends BaseWidget
             ->bulkActions([
                 // ...
             ])
-            ->defaultSort('transaction_date', 'desc');
+            ->defaultSort('transaction_date', 'desc')
+            ->paginated(false); // Still good to have if getTableRecords fetches all intended display data
     }
 }

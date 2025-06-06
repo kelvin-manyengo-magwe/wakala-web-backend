@@ -6,93 +6,84 @@ use Filament\Widgets\ChartWidget;
 use App\Models\AirtelTransaction;
 use App\Models\HalotelTransaction;
 use Carbon\Carbon;
-use Flowframe\Trend\Trend;
-use Flowframe\Trend\TrendValue;
+use Carbon\CarbonPeriod; // For date iteration
 use Illuminate\Support\Facades\Config;
 
 class ProfitCommissionChartWidget extends ChartWidget
 {
-    protected static ?string $heading = 'Mwenendo wa Kamisheni Iliyopatikana (Siku 30 Zilizopita)'; // Swahili: Commission Earned Trend (Last 30 Days)
+    protected static ?string $heading = 'Mwenendo wa Kamisheni Iliyopatikana (Siku 30 Zilizopita)';
     protected static ?string $pollingInterval = '60s';
     protected static bool $isLazy = true;
-    protected int | string | array $columnSpan = 1; // Default to 1, can be part of a 2-column layout
+    protected int | string | array $columnSpan = 1;
 
     protected function getData(): array
     {
         $appTimezone = Config::get('app.timezone', 'UTC');
-        $endDate = Carbon::now($appTimezone)->endOfDay();
-        $startDate = Carbon::now($appTimezone)->subDays(29)->startOfDay();
 
-        $getCommissionTrend = function ($modelClass) use ($startDate, $endDate) {
-            return Trend::model($modelClass)
-                ->between($startDate, $endDate)
-                ->perDay()
-                ->dateColumn('processed_at') // Assuming commission is tied to 'processed_at' date
-                ->sum('commission'); // Sum of commission
-        };
+        // We want data for the last 30 days *including* today.
+        // So, we go back 29 days from today to get a 30-day period.
+        $endDate = Carbon::now($appTimezone)->startOfDay(); // Today, just the date part for iteration
+        $startDate = $endDate->copy()->subDays(29);    // 29 days before today = 30 days total inclusive
 
-        $airtelCommissionTrend = $getCommissionTrend(AirtelTransaction::class);
-        $halotelCommissionTrend = $getCommissionTrend(HalotelTransaction::class);
+        $labelsForChart = [];
+        $airtelDailyCommissionData = [];
+        $halotelDailyCommissionData = [];
 
-        // Create a complete list of dates for the labels
-        $dateLabels = [];
-        $currentDate = $startDate->copy();
-        while ($currentDate->lte($endDate)) {
-            $dateLabels[$currentDate->toDateString()] = $currentDate->isoFormat('D MMM');
-            $currentDate->addDay();
+        $period = CarbonPeriod::create($startDate, $endDate);
+
+        // Custom Swahili Month Abbreviation Map (if translatedFormat is unreliable)
+        $swahiliMonths = [
+            1 => 'Jan', 2 => 'Feb', 3 => 'Mac', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
+            7 => 'Jul', 8 => 'Ago', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des',
+        ];
+        $swahiliDaysShort = [ // J1=Monday, J2=Tuesday etc.
+            1 => 'J1', 2 => 'J2', 3 => 'J3', 4 => 'J4', 5 => 'J5', 6 => 'Sb', 7 => 'Jp',
+        ];
+
+
+        foreach ($period as $date) {
+            $dateString = $date->toDateString(); // YYYY-MM-DD for queries
+
+            // Generate Label: e.g., "J4 Mei 05" (Jumatano Mei 05) or simply "Mei 05"
+            // $dayOfWeekShort = $swahiliDaysShort[$date->dayOfWeekIso]; // Monday=1, Sunday=7
+            // $monthShort = $swahiliMonths[$date->month];
+            // $labelsForChart[] = $dayOfWeekShort . ' ' . $monthShort . ' ' . $date->format('d');
+            // Simpler and more common chart label:
+            $labelsForChart[] = $date->format('d') . ' ' . ($swahiliMonths[$date->month] ?? $date->format('M'));
+
+
+            // Calculate Airtel commission for this specific day
+            $airtelCommissionForDay = AirtelTransaction::whereDate('processed_at', $dateString)
+                                                     ->sum('commission');
+            $airtelDailyCommissionData[] = $airtelCommissionForDay ?? 0;
+
+            // Calculate Halotel commission for this specific day
+            $halotelCommissionForDay = HalotelTransaction::whereDate('processed_at', $dateString)
+                                                      ->sum('commission');
+            $halotelDailyCommissionData[] = $halotelCommissionForDay ?? 0;
         }
-
-        // Map trend data to the complete list of dates
-        $mapTrendToLabels = function ($trend, $allDateLabels) {
-            $trendData = $trend->keyBy(fn (TrendValue $value) => Carbon::parse($value->date)->toDateString())
-                               ->map(fn (TrendValue $value) => $value->aggregate);
-
-            $dataSet = [];
-            foreach (array_keys($allDateLabels) as $dateString) {
-                $dataSet[] = $trendData->get($dateString, 0);
-            }
-            return $dataSet;
-        };
-
-        $airtelCommissionData = $mapTrendToLabels($airtelCommissionTrend, $dateLabels);
-        $halotelCommissionData = $mapTrendToLabels($halotelCommissionTrend, $dateLabels);
 
         return [
             'datasets' => [
                 [
-                    'label' => 'Kamisheni ya Airtel', // Swahili: Airtel Commission
-                    'data' => $airtelCommissionData,
+                    'label' => 'Kamisheni ya Airtel (Tsh)',
+                    'data' => $airtelDailyCommissionData,
                     'borderColor' => 'rgb(220, 38, 38)',
-                    'backgroundColor' => 'rgba(220, 38, 38, 0.7)', // Solid color for bars
+                    'backgroundColor' => 'rgba(220, 38, 38, 0.7)',
                 ],
                 [
-                    'label' => 'Kamisheni ya Halotel', // Swahili: Halotel Commission
-                    'data' => $halotelCommissionData,
-                    'borderColor' => 'rgb(22, 163, 74)',
-                    'backgroundColor' => 'rgba(22, 163, 74, 0.7)', // Solid color for bars
+                    'label' => 'Kamisheni ya Halotel (Tsh)',
+                    'data' => $halotelDailyCommissionData,
+                    'borderColor' => '#ebcfc6',
+                    'backgroundColor' => '#ebcfc6',
                 ],
             ],
-            'labels' => array_values($dateLabels),
+            'labels' => $labelsForChart,
         ];
     }
 
     protected function getType(): string
     {
-        return 'bar'; // Bar chart for commission amounts
+        return 'bar';
     }
-
-    // Optional: Add chart options for tooltips or stacking if needed
-    // protected function getOptions(): array
-    // {
-    //     return [
-    //         'scales' => [
-    //             'x' => [
-    //                 'stacked' => true, // If you want to stack bars per day
-    //             ],
-    //             'y' => [
-    //                 'stacked' => true, // If you want to stack bars per day
-    //             ],
-    //         ],
-    //     ];
-    // }
 }

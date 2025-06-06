@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-      Schema::table('users', function (Blueprint $table) {
-          // phone_no is already in another migration as per input
-          $table->string('location')->nullable()->after('phone_no');
-          $table->string('till_no')->nullable()->unique()->after('location');
-      });
+        Schema::table('users', function (Blueprint $table) {
+            $table->json('till_no')->nullable();
+            $table->string('location')->nullable();
+        });
     }
 
     /**
@@ -24,7 +23,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-           $table->dropColumn(['location', 'till_no']);
-       });
+          $table->dropColumn('location');
+          $table->dropColumn('till_no');
+        });
     }
 };
