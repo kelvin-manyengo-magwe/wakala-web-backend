@@ -9,6 +9,7 @@ use App\Filament\Widgets\ProfitCommissionChartWidget;
 use App\Filament\Widgets\MnoSharePieChartWidget;
 use App\Filament\Widgets\RecentTransactionsTableWidget;
 use Livewire\Livewire;
+use Illuminate\Support\Facades\URL;
 
 
 use Illuminate\Support\ServiceProvider;
@@ -28,6 +29,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+
+        $host = request()->getHost();
+
+        $appUrl = env('APP_URL');
+
         //prevents the mass assignment issue
       Permission::unguard();
       Role::unguard();
@@ -36,6 +42,11 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('wakala-profit-commission-chart', ProfitCommissionChartWidget::class);
         Livewire::component('wakala-mno-share-pie-chart', MnoSharePieChartWidget::class);
         Livewire::component('wakala-recent-transactions-table', RecentTransactionsTableWidget::class);
+
+
+        if (request()->isSecure() || str_contains($host, parse_url($appUrl, PHP_URL_HOST)) ) {
+            URL::forceScheme('https');
+        }
 
     }
 }
