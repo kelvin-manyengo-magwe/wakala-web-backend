@@ -244,9 +244,9 @@
                     @auth
                         <li><a href="{{ url(config('filament.home_url', '/admin')) }}">Dashibodi</a></li>
                     @else
-                        <li><a href="{{ route('login') }}">Ingia</a></li>
+                        <li><a href="{{ route('filament.admin.auth.login') }}">Ingia</a></li>
                         @if (Route::has('register'))
-                            <li><a href="{{ route('register') }}" class="nav-button">Anza Bure</a></li>
+                            <li><a href="{{ route('filament.admin.auth.login') }}" class="nav-button">Anza Bure</a></li>
                         @endif
                     @endauth
                     </ul>
@@ -266,7 +266,7 @@
                             na kupata ripoti sahihi za kukuza faida yako kama wakala wa fedha.
                         </p>
                         @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="cta-button">Anza Kutumia Leo</a>
+                            <a href="{{ route('filament.admin.auth.login') }}" class="cta-button">Anza Kutumia Leo</a>
                         @else
                             <a href="{{ url(config('filament.home_url', '/admin')) }}" class="cta-button">Nenda Dashibodi</a>
                         @endif
