@@ -23,7 +23,7 @@ class RoleResource extends Resource
     // --- Swahili Labels ---
     public static function getNavigationGroup(): ?string
     {
-        return null; // "Administration"
+        return 'Utawala'; // "Administration"
     }
 
     public static function getNavigationLabel(): string

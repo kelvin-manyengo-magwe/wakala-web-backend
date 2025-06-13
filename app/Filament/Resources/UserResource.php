@@ -27,7 +27,7 @@ class UserResource extends Resource
     public static function getNavigationGroup(): ?string
     {
         // return 'Usimamizi wa Akaunti'; // Example: "Account Management"
-        return null; // Make it a top-level item for simplicity
+        return 'Utawala'; // Make it a top-level item for simplicity
     }
 
     public static function getNavigationLabel(): string
