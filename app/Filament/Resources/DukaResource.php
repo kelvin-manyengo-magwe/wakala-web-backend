@@ -40,7 +40,7 @@ class DukaResource extends Resource
                     ->numeric()->prefix('Tsh')->required()
                     ->helperText('Pesa taslimu iliyotolewa kwa ajili ya shughuli za duka hili.'),
 
-                Repeater::make('mno_allocations')
+                Repeater::make('mno_initial_allocations')
                     ->label('Mgawanyo wa Float kwa Mitandao (MNOs)')
                     ->addActionLabel('Ongeza Mtandao Mwingine')
                     ->columns(2)
@@ -74,8 +74,8 @@ class DukaResource extends Resource
                 TextColumn::make('mno_allocations_summary')
                     ->label('Float za MNO (Kuanzia)')
                     ->getStateUsing(function (Shop $record) {
-                        if (empty($record->mno_allocations)) return 'Hakuna taarifa';
-                        return collect($record->mno_allocations)
+                        if (empty($record->mno_initial_allocations)) return 'Hakuna taarifa';
+                        return collect($record->mno_initial_allocations)
                             ->map(fn ($alloc) => ucfirst($alloc['mno']) . ': ' . number_format($alloc['initial_float_allocated'] ?? 0))
                             ->implode(', ');
                     }),
