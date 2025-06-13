@@ -6,20 +6,17 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('business_investments', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
+            $table->decimal('initial_investment_amount', 15, 2); // Amount with 2 decimal places
+            $table->date('investment_date');
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('business_investments');
