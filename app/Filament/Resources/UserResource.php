@@ -176,6 +176,16 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('phone_no')
                     ->label('Namba ya Simu')
                     ->searchable(),
+
+                    // Displaying Shops assigned to this Wakala
+                Tables\Columns\TextColumn::make('assignedShops.name') // Assumes 'assignedShops' is relationship in User model
+                        ->label('Maduka Anayohudumu') // "Shops They Serve At"
+                        ->badge()
+                        ->color('warning')
+                        ->limitList(2)->expandableLimitedList()
+                        ->separator(', '),
+
+
                 Tables\Columns\TextColumn::make('location')
                     ->label('Eneo')
                     ->toggleable(isToggledHiddenByDefault: true),

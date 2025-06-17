@@ -12,6 +12,10 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Forms\Components\Toggle;
+use Illuminate\Database\Eloquent\Builder;
+
 
 class DukaResource extends Resource
 {
@@ -61,6 +65,28 @@ class DukaResource extends Resource
                         //     ->label('Taslimu kwa MNO hii (TZS)')
                         //     ->numeric()->prefix('Tsh')->required(false)->default(0),
                     ])->columnSpanFull(),
+
+                    Forms\Components\Section::make('Wakala Watakaohudumu Dukani') // "Agents Who Will Serve at the Shop"
+                    ->collapsible()
+                    ->schema([
+                        Select::make('assignedWakalas') // Name matches the relationship method in Shop model
+                            ->label('Chagua Wakala')
+                            ->relationship(
+                                name: 'assignedWakalas',
+                                titleAttribute: 'name', // Display 'name' of User
+                                modifyQueryUsing: fn (Builder $query) =>
+                                    $query->whereHas('roles', fn (Builder $q) => $q->where('name', 'wakala')) // Only show users with 'wakala' role
+                            )
+                            ->multiple() // Allow assigning multiple Wakalas
+                            ->preload()
+                            ->searchable(['name', 'email', 'phone_no'])
+                            ->helperText('Chagua watumiaji wenye jukumu la "wakala" watakaofanya kazi kwenye duka hili.')
+                            ->columnSpanFull(),
+                    ]),
+
+                    Toggle::make('is_active')
+                            ->label('Duka Lipo Kazini?') // "Shop is Active?"
+                            ->default(true),
             ]);
     }
 
@@ -70,15 +96,25 @@ class DukaResource extends Resource
             ->columns([
                 TextColumn::make('name')->label('Jina la Duka')->searchable()->sortable(),
                 TextColumn::make('location')->label('Mahali'),
-                TextColumn::make('initial_cash_on_hand')->label('Taslimu ya Kuanzia')->money('TZS')->sortable(),
+                TextColumn::make('initial_cash_on_hand')->label('Taslimu ya Kuanzia')->money('TZS')->sortable()->badge()->color('success'),
                 TextColumn::make('mno_allocations_summary')
                     ->label('Float za MNO (Kuanzia)')
                     ->getStateUsing(function (Shop $record) {
                         if (empty($record->mno_initial_allocations)) return 'Hakuna taarifa';
                         return collect($record->mno_initial_allocations)
-                            ->map(fn ($alloc) => ucfirst($alloc['mno']) . ': ' . number_format($alloc['initial_float_allocated'] ?? 0))
+                        ->map(fn ($alloc) => ucfirst($alloc['mno']) . ': ' . number_format($alloc['initial_float_allocated'] ?? 0) . ' TZS')
+
                             ->implode(', ');
                     }),
+
+                    TextColumn::make('assignedWakalas.name') // Accesses names from related wakalas
+                        ->label('Mawakala Waliopewa')
+                        ->badge()
+                        ->limitList(3)->expandableLimitedList()
+                        ->separator(', '),
+                    IconColumn::make('is_active')
+                        ->label('Lipo Kazini?')
+                        ->boolean(),
             ])
             // ... actions, filters ...
             ;

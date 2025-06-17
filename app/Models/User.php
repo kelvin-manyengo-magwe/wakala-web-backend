@@ -12,6 +12,8 @@ use Spatie\Permission\Traits\HasRoles;
 use Spatie\Permission\Models\Role;
 use App\Models\AirtelTransaction;
 use App\Models\HalotelTransaction;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
 
 
 
@@ -69,6 +71,15 @@ class User extends Authenticatable
           {
               return $this->hasMany(HalotelTransaction::class);
           }
+
+          /**
+    * Shops this User (Wakala) is assigned to operate.
+    */
+         public function assignedShops(): BelongsToMany
+         {
+              return $this->belongsToMany(Shop::class, 'shop_user', 'user_id', 'shop_id')
+                         ->withTimestamps(); // If your pivot table has timestamps
+         }
 
        /*public function roles()
             {

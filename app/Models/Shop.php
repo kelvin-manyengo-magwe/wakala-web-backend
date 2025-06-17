@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
 
 class Shop extends Model
 {
@@ -35,6 +37,12 @@ class Shop extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function assignedWakalas(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'shop_user', 'shop_id', 'user_id')
+                    ->withTimestamps(); // If your pivot table has timestamps
+    }
+
     /**
      * Daily reports for this shop.
      */
@@ -46,7 +54,8 @@ class Shop extends Model
     // You might add accessors to get specific MNO initial float or total initial float
     public function getTotalInitialFloatAllocatedAttribute(): float
     {
-        if (empty($this->mno_initial_allocations)) {
+        if (empty($this->mno_initial_allocations))
+        {
             return 0;
         }
         return collect($this->mno_initial_allocations)->sum('initial_float');
