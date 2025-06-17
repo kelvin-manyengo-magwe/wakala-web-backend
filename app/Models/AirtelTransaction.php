@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use App\Models\OriginalSms;
 use App\Models\TransactionType;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 
 class AirtelTransaction extends Model
 {
@@ -15,12 +17,24 @@ class AirtelTransaction extends Model
     protected $fillable = [ /* ...all columns from migration except auto-generated ones ... */
         'device_id', 'customer_id', 'sms_id', 'type_id', 'user_id',
         'ref_no', 'date', 'amount', 'commission', 'float_balance',
-        'raw_payload', 'processed_at',
+        'raw_payload', 'processed_at', 'shop_id'
     ];
     protected $casts = ['date' => 'datetime', 'processed_at' => 'datetime'];
 
     public function device() { return $this->belongsTo(Device::class); }
-    public function customer() { return $this->belongsTo(Customer::class); }
+
+
+
+    public function shop(): BelongsTo
+          {
+              return $this->belongsTo(Shop::class);
+          }
+
+
+    public function customer()
+          {
+              return $this->belongsTo(Customer::class);
+          }
     public function type() { return $this->belongsTo(TransactionType::class, 'type_id'); }
     public function sms() { return $this->belongsTo(OriginalSms::class, 'sms_id'); }
     public function user() { return $this->belongsTo(User::class); } // Wakala

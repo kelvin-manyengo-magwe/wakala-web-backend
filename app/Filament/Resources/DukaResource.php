@@ -30,65 +30,92 @@ class DukaResource extends Resource
     public static function getNavigationLabel(): string { return 'Maduka na Salio'; }
 
     public static function form(Form $form): Form
-    {
-        $mnoOptions = ['airtel' => 'Airtel', 'halotel' => 'Halotel', 'tigo' => 'Tigo Pesa', 'mpesa' => 'M-Pesa'];
+{
+    $mnoOptions = ['airtel' => 'Airtel', 'halotel' => 'Halotel', 'tigo' => 'Tigo Pesa', 'mpesa' => 'M-Pesa'];
 
-        return $form
+    return $form->schema([
+        TextInput::make('name')
+            ->label('Jina la Duka/Eneo la Wakala')
+            ->required()
+            ->columnSpanFull(),
+
+        TextInput::make('location')
+            ->label('Mahali Lilipo (Hiari)')
+            ->columnSpanFull(),
+
+        TextInput::make('initial_cash_on_hand')
+            ->label('Fedha Taslimu Mkononi ya Kuanzia Dukani (TZS)')
+            ->numeric()
+            ->prefix('Tsh')
+            ->required()
+            ->helperText('Pesa taslimu iliyotolewa kwa ajili ya shughuli za duka hili.'),
+
+        Repeater::make('mno_initial_allocations')
+            ->label('Mgawanyo wa Float kwa Mitandao (MNOs)')
+            ->addActionLabel('Ongeza Mtandao Mwingine')
+            ->columns(2)
+            ->collapsible()
+            ->itemLabel(fn (array $state): ?string =>
+                ($mnoOptions[$state['mno']] ?? 'Mtandao') . ': Float ' . number_format($state['initial_float_allocated'] ?? 0)
+            )
             ->schema([
-                TextInput::make('name')
-                    ->label('Jina la Duka/Eneo la Wakala')
-                    ->required()->columnSpanFull(),
-                TextInput::make('location')->label('Mahali Lilipo (Hiari)')->columnSpanFull(),
-                TextInput::make('initial_cash_on_hand')
-                    ->label('Fedha Taslimu Mkononi ya Kuanzia Dukani (TZS)')
-                    ->numeric()->prefix('Tsh')->required()
-                    ->helperText('Pesa taslimu iliyotolewa kwa ajili ya shughuli za duka hili.'),
+                Select::make('mno')
+                    ->label('Chagua Mtandao')
+                    ->options($mnoOptions)
+                    ->required()
+                    ->distinct()
+                    ->disableOptionsWhenSelectedInSiblingRepeaterItems(),
 
-                Repeater::make('mno_initial_allocations')
-                    ->label('Mgawanyo wa Float kwa Mitandao (MNOs)')
-                    ->addActionLabel('Ongeza Mtandao Mwingine')
-                    ->columns(2)
-                    ->collapsible()
-                    ->itemLabel(fn (array $state): ?string => ($mnoOptions[$state['mno']] ?? 'Mtandao') . ': Float ' . number_format($state['initial_float_allocated'] ?? 0))
-                    ->schema([
-                        Select::make('mno')
-                            ->label('Chagua Mtandao')
-                            ->options($mnoOptions)
-                            ->required()
-                            ->distinct() // Prevent adding same MNO twice for same shop
-                            ->disableOptionsWhenSelectedInSiblingRepeaterItems(),
-                        TextInput::make('initial_float_allocated')
-                            ->label('Float ya Kuanzia (TZS)')
-                            ->numeric()->prefix('Tsh')->required(false)->default(0),
-                        // Optionally: Cash allocated specifically for this MNO's operations at this shop
-                        // TextInput::make('initial_cash_for_mno_ops')
-                        //     ->label('Taslimu kwa MNO hii (TZS)')
-                        //     ->numeric()->prefix('Tsh')->required(false)->default(0),
-                    ])->columnSpanFull(),
+                TextInput::make('initial_float_allocated')
+                    ->label('Float ya Kuanzia (TZS)')
+                    ->numeric()
+                    ->prefix('Tsh')
+                    ->required(false)
+                    ->default(0),
+            ])
+            ->columnSpanFull(),
 
-                    Forms\Components\Section::make('Wakala Watakaohudumu Dukani') // "Agents Who Will Serve at the Shop"
-                    ->collapsible()
-                    ->schema([
-                        Select::make('assignedWakalas') // Name matches the relationship method in Shop model
-                            ->label('Chagua Wakala')
-                            ->relationship(
-                                name: 'assignedWakalas',
-                                titleAttribute: 'name', // Display 'name' of User
-                                modifyQueryUsing: fn (Builder $query) =>
-                                    $query->whereHas('roles', fn (Builder $q) => $q->where('name', 'wakala')) // Only show users with 'wakala' role
-                            )
-                            ->multiple() // Allow assigning multiple Wakalas
-                            ->preload()
-                            ->searchable(['name', 'email', 'phone_no'])
-                            ->helperText('Chagua watumiaji wenye jukumu la "wakala" watakaofanya kazi kwenye duka hili.')
-                            ->columnSpanFull(),
-                    ]),
+        Forms\Components\Section::make('Wakala Watakaohudumu Dukani')
+            ->collapsible()
+            ->schema([
+                Select::make('assignedWakalas')
+                    ->label('Chagua Wakala')
+                    ->relationship(
+                        name: 'assignedWakalas',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn (Builder $query) =>
+                            $query->whereHas('roles', fn (Builder $q) => $q->where('name', 'wakala'))
+                    )
+                    ->multiple()
+                    ->preload()
+                    ->searchable(['name', 'email', 'phone_no'])
+                    ->helperText('Chagua watumiaji wenye jukumu la "wakala" watakaofanya kazi kwenye duka hili.')
+                    ->columnSpanFull(),
+            ]),
 
-                    Toggle::make('is_active')
-                            ->label('Duka Lipo Kazini?') // "Shop is Active?"
-                            ->default(true),
-            ]);
-    }
+        Toggle::make('is_active')
+            ->label('Duka Lipo Kazini?')
+            ->default(true),
+
+        Forms\Components\Section::make('Vifaa vya Dukani (Simu za Miamala)')
+            ->description('Sajili vifaa (simu) ambavyo vitatumika kufanya miamala kwenye duka hili...')
+            ->collapsible()
+            ->schema([
+                Select::make('devices')
+                    ->label('Chagua Vifaa Vilivyosajiliwa')
+                    ->relationship(
+                        name: 'devices',
+                        titleAttribute: 'device_id_display'
+                    )
+                    ->multiple()
+                    ->preload()
+                    ->searchable()
+                    ->helperText('Kama kifaa hakipo, ongeza kifaa kipya kwenye mfumo kwanza kisha ukichague hapa.')
+                    ->columnSpanFull(),
+            ]),
+    ]);
+}
+
 
     public static function table(Table $table): Table
     {

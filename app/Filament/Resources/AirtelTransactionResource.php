@@ -11,6 +11,10 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Support\HtmlString;
+use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Database\Eloquent\Builder;
+
+
 
 class AirtelTransactionResource extends Resource
 {
@@ -107,15 +111,35 @@ class AirtelTransactionResource extends Resource
                 TextColumn::make('date')->dateTime()->sortable()->label('Tarehe'),
                 TextColumn::make('ref_no')->searchable()->label('Namba Unukuzi'),
                 TextColumn::make('customer.name')->searchable()->label('Mteja'),
-                TextColumn::make('type.name')->label('Aina'),
+                TextColumn::make('type.name')->label('Aina')->badge(),
                 TextColumn::make('amount')->money('TZS')->sortable()->label('Kiasi'),
                 TextColumn::make('commission')->money('TZS')->sortable()->label('Kamisheni'),
                 TextColumn::make('user.name')->label('Wakala')->searchable(),
+                TextColumn::make('shop.name')->label('Duka')->searchable()->sortable()->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('float_balance')->label('Float Baada ya Muamala')->money('TZS')->sortable()->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('processed_at')->dateTime()->sortable()->label('Ilisindikwa')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')->dateTime()->sortable()->label('Iliingizwa Mfumo')->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                // Ongeza vichujio kama vinahitajika
+                    SelectFilter::make('shop_id')
+                        ->label('Chuja kwa Duka')
+                        ->relationship('shop', 'name')
+                        ->searchable()->preload(),
+                    SelectFilter::make('user_id') // Filters by the Wakala who processed/synced
+                        ->label('Chuja kwa Wakala Aliyeingiza')
+                        ->relationship('user', 'name') // Assumes relationship 'user' on Transaction model
+                        ->searchable()->preload(),
+                    Tables\Filters\Filter::make('processed_at')
+                        ->form([Forms\Components\DatePicker::make('tarehe_kuanzia')->label('Kuanzia Tarehe'), Forms\Components\DatePicker::make('tarehe_kumaliza')->label('Hadi Tarehe'), ])
+                        ->query(function (Builder $query, array $data): Builder {
+                            return $query
+                                ->when($data['tarehe_kuanzia'], fn (Builder $query, $date): Builder => $query->whereDate('processed_at', '>=', $date))
+                                ->when($data['tarehe_kumaliza'], fn (Builder $query, $date): Builder => $query->whereDate('processed_at', '<=', $date));
+                        }),
+
+
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
