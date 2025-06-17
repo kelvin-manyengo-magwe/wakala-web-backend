@@ -2,251 +2,262 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'Wakala') }} - Usimamizi BORA wa Miamala ya wakala</title> {{-- Changed title slightly --}}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ config('app.name', 'WakalaTEL') }} - Inua Biashara Yako ya Uwakala</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700&display=swap" rel="stylesheet" />
-
-    {{-- Placeholder for Favicon --}}
+    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700,800&display=swap" rel="stylesheet" />
     {{-- <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon"> --}}
 
     <style>
         :root {
-            --brand-primary: #D90429; /* A strong, confident Red - Adjust to your brand */
-            --brand-secondary: #EF233C; /* A slightly lighter, vibrant Red */
-            --brand-dark: #2B2D42;    /* Darker text, less harsh than pure black */
+            --brand-primary: #D7263D; /* Main Red */
+            --brand-primary-dark: #B81D31; /* Darker Red for hover/depth */
+            --brand-secondary: #F46036; /* Vibrant Orange/Red accent */
+            --brand-dark: #1A1C22;    /* Near Black for text */
             --brand-light: #FFFFFF;
-            --brand-accent: #8D99AE;  /* A cool gray for accents or secondary text */
-            --brand-background: #EDF2F4; /* Very light gray for body background */
+            --brand-bg-main: #FDFDFD; /* Very light, almost white background */
+            --brand-bg-alt: #F4F6F8; /* Slightly off-white for alternating sections */
+            --brand-text-muted: #525C6B;  /* Softer gray for text */
             --font-family-main: 'Instrument Sans', sans-serif;
-            --box-shadow-light: 0 4px 15px rgba(0,0,0,0.07);
-            --box-shadow-medium: 0 8px 25px rgba(0,0,0,0.1);
-            --border-radius-main: 8px;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.04);
+            --shadow-md: 0 5px 15px rgba(0,0,0,0.08);
+            --shadow-lg: 0 15px 35px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.07);
+            --border-radius-md: 10px;   /* Increased default radius */
+            --border-radius-lg: 16px;  /* Large radius for containers like slider */
+            --transition-main: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
         *, *::before, *::after { box-sizing: border-box; }
-
+        html { scroll-behavior: smooth; }
         body {
-            font-family: var(--font-family-main);
-            background-color: var(--brand-background);
-            color: var(--brand-dark);
-            line-height: 1.7;
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-            font-size: 16px; /* Base font size */
+            font-family: var(--font-family-main); background-color: var(--brand-bg-main);
+            color: var(--brand-dark); line-height: 1.8; margin: 0; padding: 0;
+            overflow-x: hidden; font-size: 17px; /* Slightly larger base for better readability */
+            -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
         }
-
-        .container {
-            width: 90%;
-            max-width: 1160px; /* Slightly wider max-width */
-            margin: 0 auto;
-            padding: 0 15px;
-        }
+        .container { width: 92%; max-width: 1320px; margin: 0 auto; padding: 0 1rem; }
 
         /* Header */
         .main-header {
-            padding: 1rem 0;
-            background-color: var(--brand-light);
-            position: fixed; /* Fixed header */
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 1000;
-            transition: background-color 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: var(--box-shadow-light);
+            padding: 1rem 0; background-color: transparent; position: fixed;
+            top: 0; left: 0; width: 100%; z-index: 1000;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease, padding 0.3s ease;
         }
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .main-header.scrolled {
+            background-color: rgba(255, 255, 255, 0.98); backdrop-filter: blur(12px);
+            box-shadow: var(--shadow-md); padding: 0.75rem 0;
         }
-        .logo a {
-            font-size: 2rem; /* Increased size */
-            font-weight: 700;
-            color: var(--brand-primary);
-            text-decoration: none;
-            letter-spacing: -1px;
-        }
-        .main-nav ul { list-style: none; padding: 0; margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 2.1rem; font-weight: 800; color: var(--brand-primary); text-decoration: none; letter-spacing: -1px; }
+        .main-nav ul { list-style: none; padding: 0; margin: 0; display: flex; align-items: center; gap: 1rem; }
         .main-nav a {
-            color: var(--brand-dark); font-size: 0.95rem; font-weight: 500; text-decoration: none;
-            padding: 0.6rem 1rem; border-radius: var(--border-radius-main); transition: all 0.2s ease;
+            color: var(--brand-dark); font-size: 1rem; font-weight: 600; text-decoration: none;
+            padding: 0.5rem 0.8rem; border-radius: var(--border-radius-sm); transition: var(--transition-main); position: relative;
         }
-        .main-nav a:hover { background-color: var(--brand-background); color: var(--brand-primary); }
+        .main-nav a::after { /* Underline hover effect */
+            content: ''; position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%);
+            width: 0; height: 2px; background-color: var(--brand-primary); transition: width 0.3s ease;
+        }
+        .main-nav a:hover::after, .main-nav a.active::after { width: 80%; }
         .main-nav a.nav-button {
-            background-color: var(--brand-primary); color: var(--brand-light) !important;
-            box-shadow: 0 2px 8px rgba(217, 4, 41, 0.3);
+            background-image: linear-gradient(to right, var(--brand-secondary) 0%, var(--brand-primary) 70%, var(--brand-secondary) 100%);
+            background-size: 200% auto; color: var(--brand-light) !important; padding: 0.7rem 1.8rem;
+            box-shadow: 0 4px 10px rgba(217, 4, 41, 0.25); border: none; font-weight: 600;
         }
-        .main-nav a.nav-button:hover { background-color: #B70322; /* Darker primary */ }
-        .menu-toggle { display: none; font-size: 1.8rem; cursor: pointer; background: none; border: none; color: var(--brand-dark); padding: 0; }
-
-        /* Main content needs top padding due to fixed header */
-        main {
-            padding-top: 90px; /* Adjust based on actual header height */
-        }
+        .main-nav a.nav-button::after { display:none; } /* No underline for button */
+        .main-nav a.nav-button:hover { background-position: right center; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(217, 4, 41, 0.35); }
+        .menu-toggle { display: none; /* ... same as before ... */ }
+        main { padding-top: 110px; /* Updated for potentially larger header initially */ }
 
         /* Hero Section */
         .hero-section {
-            padding: 80px 0 100px 0; /* More bottom padding */
-            background: linear-gradient(135deg, var(--brand-light) 60%, var(--brand-background) 100%);
-            overflow: hidden; /* Contain decorative elements */
+            padding: 100px 0 120px 0; background: var(--brand-light);
+            position: relative; overflow: hidden; /* Essential for ::before/::after elements */
         }
-        .hero-grid { display: grid; grid-template-columns: repeat(2, 1fr); align-items: center; gap: 3rem; }
-        .hero-text { animation: fadeInFromLeft 1s ease-out forwards; }
+        /* --- CURVED DECORATIVE BACKGROUND ELEMENT --- */
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            bottom: -150px; /* Position it to look like it's rising from bottom */
+            left: -10%;
+            width: 120%;
+            height: 400px; /* Height of the curve */
+            background-color: var(--brand-primary);
+            border-radius: 50% / 100px; /* Creates an asymmetric curve */
+            transform: rotate(-4deg); /* Slight rotation for dynamism */
+            z-index: 0; /* Behind content */
+            opacity: 0.1; /* Very subtle */
+            animation: subtleWave 15s ease-in-out infinite alternate;
+        }
+        .hero-grid { display: grid; grid-template-columns: minmax(400px, 1fr) 1fr; align-items: center; gap: 4rem; position: relative; z-index: 1;}
+        .hero-text { animation: fadeInUpSlight 0.8s ease-out 0.2s forwards; opacity:0; }
+        .hero-text .eyebrow {
+            display: inline-block; padding: 0.3rem 0.8rem;
+            font-size: 0.85rem; font-weight: 600; color: var(--brand-primary);
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;
+            background-color: rgba(217, 4, 41, 0.1); border-radius: var(--border-radius-sm);
+        }
         .hero-text h1 {
-            font-size: 3.2rem; font-weight: 700; line-height: 1.25; color: var(--brand-dark);
+            font-size: 3.8rem; /* Even larger for impact on big screens */
+            font-weight: 800; line-height: 1.2; color: var(--brand-dark);
             margin-bottom: 1.5rem;
         }
-        .hero-text h1 .highlight { color: var(--brand-primary); }
+        .hero-text h1 .highlight {
+            /* More subtle highlight if needed, or keep bright red */
+            /* background: linear-gradient(to top, rgba(239, 35, 54, 0.2) 30%, transparent 30%); */
+            color: var(--brand-primary);
+        }
         .hero-text p.subtitle {
-            font-size: 1.2rem; color: var(--brand-accent); margin-bottom: 2rem; max-width: 520px;
+            font-size: 1.25rem; color: var(--brand-text-muted); margin-bottom: 2.5rem; max-width: 580px;
         }
-        .cta-button {
-            background-color: var(--brand-primary); color: var(--brand-light); padding: 1rem 2.2rem;
-            font-size: 1.1rem; font-weight: 600; text-decoration: none; border-radius: var(--border-radius-main);
-            transition: all 0.3s ease; display: inline-block; box-shadow: 0 5px 20px rgba(217, 4, 41, 0.35);
+        .cta-button { /* Copied from nav-button for consistency, can be unique */
+            background-image: linear-gradient(to right, var(--brand-secondary) 0%, var(--brand-primary) 70%, var(--brand-secondary) 100%);
+            background-size: 200% auto; color: var(--brand-light); padding: 1.2rem 2.8rem; /* Larger CTA */
+            font-size: 1.15rem; font-weight: 600; text-decoration: none; border-radius: var(--border-radius-md);
+            transition: var(--transition-main); display: inline-block; border: none;
+            box-shadow: 0 6px 20px rgba(217, 4, 41, 0.3);
         }
-        .cta-button:hover { background-color: #B70322; transform: translateY(-4px); box-shadow: 0 8px 25px rgba(217, 4, 41, 0.45); }
+        .cta-button:hover { background-position: right center; transform: scale(1.03) translateY(-3px); box-shadow: 0 8px 25px rgba(217, 4, 41, 0.4); }
 
         /* Image Slider */
         .hero-slider {
-            width: 100%; max-width: 550px; height: 400px; /* Adjust height */
-            position: relative; overflow: hidden; border-radius: 12px;
-            box-shadow: var(--box-shadow-medium);
-            animation: fadeInFromRight 1s ease-out 0.3s forwards; /* Delayed animation */
-            opacity: 0; /* Start hidden for animation */
+            width: 100%; max-width: 650px; /* Increased max-width */
+            height: 500px; /* Significantly increased height */
+            position: relative; overflow: hidden; border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            animation: fadeInScaleUp 0.8s ease-out 0.5s forwards; opacity:0;
+            border: 8px solid var(--brand-light); /* Thicker frame */
         }
         .slide {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0;
-            animation: crossfadeEffect 28s infinite ease-in-out; /* 7s per image * 4 images */
-            background-size: cover; background-position: center center; /* Ensure image is centered */
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            animation: smootherCrossfadeEffect 32s infinite ease-in-out; /* 8s per image total (1s in, 6s visible, 1s out) */
+            background-size: cover; background-position: center center;
         }
-        .slide:nth-child(1) { animation-delay: 0s;  background-image: url("{{ asset('images/mno/wakala-shops1.webp') }}"); }
-        .slide:nth-child(2) { animation-delay: 7s;  background-image: url("{{ asset('images/mno/wakala-shops2.jpg') }}"); }
-        .slide:nth-child(3) { animation-delay: 14s; background-image: url("{{ asset('images/mno/wakala-shops5.jpg') }}"); }
-        .slide:nth-child(4) { animation-delay: 21s; background-image: url("{{ asset('images/mno/wakala-shops6.jpg') }}"); }
+        /* IMPORTANT: Ensure one slide is visible from the start to prevent white flash */
+        .slide:first-child { opacity: 1; animation-name: firstSlideFadeIn, smootherCrossfadeEffect; animation-delay: 0s, 0s; animation-duration: 0s, 32s; } /* Make first immediately visible then participate in fade */
 
-        /* Section Styling */
-        .content-section { padding: 80px 0; }
-        .content-section.bg-light { background-color: var(--brand-light); }
-        .section-title {
-            text-align: center; font-size: 2.5rem; font-weight: 700;
-            color: var(--brand-dark); margin-bottom: 1.5rem; position: relative;
-        }
-        .section-subtitle {
-            text-align: center; font-size: 1.15rem; color: var(--brand-gray);
-            max-width: 650px; margin: 0 auto 60px auto;
-        }
+        .slide:nth-child(1) { background-image: url("{{ asset('images/mno/wakala-shops1.webp') }}"); animation-delay: 0s; } /* Keep delay for cycling */
+        .slide:nth-child(2) { background-image: url("{{ asset('images/mno/wakala-shops2.jpg') }}"); animation-delay: 8s; }
+        .slide:nth-child(3) { background-image: url("{{ asset('images/mno/wakala-shops3.jpg') }}"); animation-delay: 16s; }
+        .slide:nth-child(4) { background-image: url("{{ asset('images/mno/wakala-shops4.jpg') }}"); animation-delay: 24s; }
 
-        /* Features Grid */
-        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2.5rem; }
-        .feature-card {
-            background-color: var(--brand-light); padding: 2.5rem 2rem; border-radius: var(--border-radius-main);
-            box-shadow: var(--box-shadow-light); text-align: center; transition: all 0.3s ease;
-        }
-        .feature-card:hover { transform: translateY(-8px); box-shadow: var(--box-shadow-medium); }
-        .feature-icon img { /* Expecting <img> tag for icons now */
-            height: 50px; width: auto; margin-bottom: 1.5rem;
-        }
-        .feature-card h3 {
-            font-size: 1.5rem; font-weight: 600; color: var(--brand-dark); margin-bottom: 0.8rem;
-        }
-        .feature-card p { font-size: 0.95rem; color: var(--brand-gray); line-height: 1.6; }
+        /* Section Styling - Reusable */
+        .section-padding { padding: 100px 0; }
+        .section-bg-alt { background-color: var(--brand-bg-alt); }
+        .section-heading .eyebrow { /* same as hero eyebrow */ }
+        .section-heading .section-title { /* same as before */ }
+        .section-heading .section-subtitle { /* same as before */ }
 
-        /* How It Works Section */
-        .how-it-works-content { display: flex; align-items: center; gap: 3rem; flex-wrap: wrap; }
-        .how-it-works-text { flex: 1; min-width: 300px; }
-        .how-it-works-image { flex: 1; text-align: center; min-width: 300px; }
-        .how-it-works-image img { max-width: 100%; height: auto; border-radius: var(--border-radius-main); box-shadow: var(--box-shadow-medium); }
-        .how-it-works-section ol { list-style: none; padding-left: 0; counter-reset: step-counter; }
-        .how-it-works-section li {
-            font-size: 1.1rem; margin-bottom: 1.5rem; padding-left: 45px; position: relative;
+        /* Features Grid - Reusable Card Style */
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+        .info-card {
+            background-color: var(--brand-light); padding: 2rem; border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-md); text-align: left; transition: var(--transition-main);
+            border-left: 5px solid transparent;
         }
-        .how-it-works-section li::before {
+        .info-card:hover { transform: translateY(-10px) scale(1.02); box-shadow: var(--shadow-lg); border-left-color: var(--brand-secondary); }
+        .info-icon img { height: 50px; width: auto; margin-bottom: 1.25rem; }
+        .info-card h3 { font-size: 1.35rem; font-weight: 600; color: var(--brand-dark); margin-bottom: 0.75rem; }
+        .info-card p { font-size: 1rem; color: var(--brand-text-muted); line-height: 1.7; }
+
+        /* How It Works Section - Reusable Step Style */
+        .steps-list ol { list-style: none; padding-left: 0; counter-reset: step-counter; margin-top: 2rem; }
+        .steps-list li {
+            background-color: var(--brand-light); padding: 1.5rem; border-radius: var(--border-radius-md);
+            font-size: 1.05rem; margin-bottom: 1.5rem; position: relative;
+            box-shadow: var(--shadow-sm); display: flex; align-items: flex-start;
+            transition: var(--transition-main);
+        }
+        .steps-list li:hover { box-shadow: var(--shadow-md); transform: translateX(5px); }
+        .steps-list li::before { /* Step number */
             content: counter(step-counter); counter-increment: step-counter;
-            position: absolute; left: 0; top: -2px; /* Adjust top for alignment */
             color: var(--brand-light); background-color: var(--brand-primary);
-            width: 30px; height: 30px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; /* Center number */
-            font-weight: bold; font-size: 1rem;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            min-width: 36px; height: 36px; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 1.1rem; margin-right: 1.5rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15); flex-shrink: 0; /* Prevent shrinking */
         }
-        .how-it-works-section li strong { font-weight: 600; color: var(--brand-dark); display: block; margin-bottom: 0.25rem; }
+        .steps-list li div strong { font-weight: 700; color: var(--brand-dark); display: block; margin-bottom: 0.3rem; font-size:1.2rem; }
+        .steps-list li div span { color: var(--brand-text-muted); }
 
         /* Footer */
-        .main-footer {
-            background-color: var(--brand-dark); color: #A9B4C2; /* Lighter gray for footer text */
-            text-align: center; padding: 50px 0;
-        }
-        .main-footer p { margin: 0; font-size: 0.9rem; }
-        .main-footer a { color: var(--brand-secondary); text-decoration: none; }
-        .main-footer a:hover { text-decoration: underline; }
+        .main-footer { background-color: var(--brand-dark); color: #BECADA; text-align: center; padding: 3.5rem 0; margin-top: 0; /* Let sections define bottom margin */ }
+        .main-footer p { margin-bottom: 0.5rem; font-size: 0.95rem; }
+        .main-footer .footer-links { margin-top: 1rem; }
+        .main-footer .footer-links a { color: var(--brand-accent); text-decoration: none; margin: 0 0.75rem; font-size:0.85rem; }
+        .main-footer .footer-links a:hover { color: var(--brand-secondary); }
 
-        /* Animations Keyframes */
-        @keyframes crossfadeEffect {
-            0%, 25%, 100% { opacity: 0; } /* Each image shown for 20% of total (5% in, 10% visible, 5% out) */
-            3.57%  { opacity: 1; } /* (1s / 28s) * 100 - Fade in */
-            21.42% { opacity: 1; } /* ( (1s+5s) / 28s ) * 100 - Visible duration */
+        /* Animations */
+        @keyframes smootherCrossfadeEffect { /* Smoother, ensures one is always visible */
+            0%   { opacity: 0; animation-timing-function: ease-in; } /* Start hidden */
+            3.125% { opacity: 1; } /* Fade in (1s / 32s total duration * 100) */
+            21.875% { opacity: 1; } /* Visible for 6s ((1s in + 6s visible)/32s * 100) */
+            25%  { opacity: 0; animation-timing-function: ease-out; } /* Fade out (1s out) */
+            100% { opacity: 0; } /* Remain hidden for rest of its 8s cycle */
         }
-        @keyframes fadeInFromLeft { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes fadeInFromRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+        /* Special animation for first slide to be immediately visible then join cycle */
+        @keyframes firstSlideFadeIn { 0% { opacity: 1; } 100% { opacity: 1; } }
 
-        /* Responsive Adjustments */
-        @media (max-width: 991px) { /* Tablet and below */
-            .main-header { padding: 0.8rem 0; }
-            main { padding-top: 70px; } /* Adjust based on new header height */
-            .menu-toggle { display: inline-flex; align-items:center; } /* Use inline-flex for better alignment */
+        @keyframes fadeInUpSlight { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInScaleUp { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+        @keyframes subtleWave {
+            0% { transform: rotate(-4deg) translateY(0px); }
+            50% { transform: rotate(-3deg) translateY(-15px) translateX(10px); }
+            100% { transform: rotate(-4deg) translateY(0px); }
+        }
+
+        /* Responsive */
+        @media (max-width: 991px) { /* Tablet */
+            main { padding-top: calc(2.5rem + 30px); } /* Rough adjustment */
+            .menu-toggle { display: inline-flex; }
             .main-nav {
-                display: none; flex-direction: column; position: absolute;
-                top: 100%; left: 0; width: 100%; background-color: var(--brand-light);
-                box-shadow: 0 5px 10px rgba(0,0,0,0.1); padding: 1rem 0;
+                /* ... (Mobile nav styles from before, ensure .is-open class used by JS toggles display) ... */
+                display: none; /* Default for mobile */
+                /* Add these to style mobile menu */
+                flex-direction: column; position: absolute; top: calc(100% + 1px); /* Ensure it's just below header */
+                left: 0; right: 0; background-color: var(--brand-light);
+                box-shadow: var(--shadow-lg); padding: 1rem 0; border-top: 1px solid var(--brand-bg-light);
+                max-height: calc(100vh - 70px); overflow-y: auto;
             }
-            .main-nav.is-open { display: flex; }
-            .main-nav ul { flex-direction: column; width: 100%; }
-            .main-nav ul li { width: 100%; text-align: center; }
-            .main-nav ul li a { display: block; padding: 0.8rem 1rem; width: 100%; border-radius: 0;}
+            .main-nav.is-open { display: flex; } /* JS toggles this */
 
-            .hero-grid { grid-template-columns: 1fr; text-align: center; }
-            .hero-text { margin-bottom: 3rem; animation-name:none; } /* Remove slide-in for mobile on text if too jumpy*/
-            .hero-slider { max-width: 90%; height: 300px; margin: 0 auto; animation-name:none; opacity:1; /* Remove slide-in */ }
-            .hero-text h1 { font-size: 2.5rem; }
-            .hero-text p.subtitle { font-size: 1.1rem; max-width: 100%; }
-            .how-it-works-content { flex-direction: column-reverse; }
-            .how-it-works-image { margin-bottom: 2rem; }
+            .hero-grid { grid-template-columns: 1fr; text-align: center; gap: 2rem; }
+            .hero-text { order: 2; }
+            .hero-slider { order: 1; max-width: 80%; height: 350px; margin: 0 auto 2rem auto; }
+            .hero-text h1 { font-size: 2.8rem; }
+            .section-heading .section-title { font-size: 2.3rem; }
+            .info-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
         }
-        @media (max-width: 575px) { /* Small mobile */
-            .hero-text h1 { font-size: 2rem; }
-            .section-title { font-size: 1.8rem; }
-            .hero-slider { height: 220px; }
-            .cta-button { padding: 0.8rem 1.8rem; font-size: 0.95rem; }
-            .feature-card { padding: 1.5rem; }
-            .feature-card h3 {font-size: 1.2rem;}
+        @media (max-width: 576px) { /* Mobile */
+            main { padding-top: calc(2rem + 28px); }
+            .hero-text h1 { font-size: 2.1rem; }
+            .section-heading .section-title { font-size: 1.9rem; }
+            .hero-slider { height: 280px; }
+            .info-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
     <header class="main-header" id="pageHeader">
         <div class="container header-content">
-            <a href="{{ url('/') }}" class="logo">Wakala</a> {{-- Using App Name --}}
-
+            <a href="{{ url('/') }}" class="logo">WakalaTEL</a>
             <button class="menu-toggle" id="menuToggleBtn" aria-label="Fungua Menyu" aria-expanded="false" aria-controls="mainNav">
-                ☰ {{-- Burger Icon --}}
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
             </button>
-
             @if (Route::has('login'))
                 <nav class="main-nav" id="mainNav">
                     <ul>
-                    {{-- Add Home/Features links if desired --}}
-                    {{-- <li><a href="#features">Sifa Muhimu</a></li> --}}
-                    {{-- <li><a href="#howitworks">Jinsi Inavyofanya Kazi</a></li> --}}
+                        <li><a href="#hero">Nyumbani</a></li>
+                        <li><a href="#features">Sifa Zetu</a></li>
+                        <li><a href="#howitworks">Jinsi Inavyofanya Kazi</a></li>
                     @auth
                         <li><a href="{{ url(config('filament.home_url', '/admin')) }}">Dashibodi</a></li>
                     @else
                         <li><a href="{{ route('filament.admin.auth.login') }}">Ingia</a></li>
                         @if (Route::has('register'))
-                            <li><a href="{{ route('filament.admin.auth.login') }}" class="nav-button">Anza Bure</a></li>
+                            <li><a href="{{ route('register') }}" class="nav-button">Anza Bure Sasa</a></li>
                         @endif
                     @endauth
                     </ul>
@@ -260,19 +271,20 @@
             <div class="container">
                 <div class="hero-grid">
                     <div class="hero-text">
-                        <h1>Imarisha Biashara Yako ya <span class="highlight">Uwakala</span> kwa Teknolojia!</h1>
+                        <span class="eyebrow">Teknolojia kwa Wakala Imara</span>
+                        <h1>Badilisha Biashara Yako ya <span class="highlight">Uwakala</span> kuwa ya Kisasa na <span class="highlight">WakalaTEL</span>!</h1>
                         <p class="subtitle">
-                            Wakala inakupa zana za kisasa za kufuatilia miamala, kusimamia mapato na matumizi,
-                            na kupata ripoti sahihi za kukuza faida yako kama wakala wa fedha.
+                            Pata udhibiti kamili wa miamala, fuatilia float kiurahisi, na utengeneze ripoti za faida kwa haraka.
+                            WakalaTEL ni msaidizi wako mkuu kuelekea mafanikio.
                         </p>
                         @if (Route::has('register'))
-                            <a href="{{ route('filament.admin.auth.login') }}" class="cta-button">Anza Kutumia Leo</a>
+                            <a href="{{ route('register') }}" class="cta-button">Jaribu Bila Malipo Leo</a>
                         @else
-                            <a href="{{ url(config('filament.home_url', '/admin')) }}" class="cta-button">Nenda Dashibodi</a>
+                             <a href="{{ url(config('filament.home_url', '/admin')) }}" class="cta-button">Nenda Kwenye Dashibodi</a>
                         @endif
                     </div>
                     <div class="hero-slider">
-                        <div class="slide"></div> {{-- Images set by CSS background --}}
+                        <div class="slide"></div>
                         <div class="slide"></div>
                         <div class="slide"></div>
                         <div class="slide"></div>
@@ -281,41 +293,35 @@
             </div>
         </section>
 
-        <section class="content-section bg-light" id="features">
+        <section class="content-section section-bg-alt" id="features">
             <div class="container">
-                <h2 class="section-title">Sifa Muhimu za Wakala</h2>
-                <p class="section-subtitle">
-                    Gundua jinsi Wakala inavyoweza kubadilisha usimamizi wa biashara yako ya uwakala na kuongeza ufanisi wako.
-                </p>
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                              <img src="https://img.icons8.com/color/96/cash-in-hand.png" width="30" height="30" alt="Send Cash" />
-
-                        </div>
-                        <h3>Ufuatiliaji Halisi wa Miamala</h3>
-                        <p>Pata taarifa papo hapo kwa kila muamala unaofanyika - iwe kuweka, kutoa, au malipo - kwa mitandao yote mikuu.</p>
+                <div class="section-heading">
+                    <span class="eyebrow">Nguvu ya Kidijitali</span>
+                    <h2 class="section-title">Vipengele Vya Kipekee Vitakavyokuinua</h2>
+                    <p class="section-subtitle">
+                        Tumeweka pamoja zana zote muhimu unazohitaji ili kurahisisha kazi zako za kila siku na kukuza biashara yako ya uwakala.
+                    </p>
+                </div>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="info-icon"><img src="{{ asset('images/icons/icon_realtime_sync.svg') }}" alt="Usawazishaji"></div> {{-- REPLACE --}}
+                        <h3>Usawazishaji Papo Hapo</h3>
+                        <p>Unganisha simu yako na upate taarifa za miamala yote moja kwa moja kwenye mfumo bila kuchelewa.</p>
                     </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                              <img src="https://img.icons8.com/color/96/business-report.png" width="40" />
-                        </div>
-                        <h3>Ripoti za Kina na Uchambuzi</h3>
-                        <p>Fahamu faida yako, kamisheni, na mienendo ya mtiririko wa pesa kupitia ripoti zilizo rahisi kusoma na kuelewa.</p>
+                    <div class="info-card">
+                        <div class="info-icon"><img src="{{ asset('images/icons/icon_analytics.svg') }}" alt="Ripoti"></div> {{-- REPLACE --}}
+                        <h3>Ripoti za Kina za Biashara</h3>
+                        <p>Fahamu faida, kamisheni, na mienendo ya pesa zako kupitia ripoti zenye uchambuzi wa kina na rahisi kuelewa.</p>
                     </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                                <img src="https://img.icons8.com/color/96/money-transfer.png" width="40" />
-                        </div>
-                        <h3>Usimamizi Bora wa Float</h3>
-                        <p>Jua salio lako la float kwa kila mtandao wakati wowote, saidia kuepuka usumbufu wa kukosa float.</p>
+                    <div class="info-card">
+                        <div class="info-icon"><img src="{{ asset('images/icons/icon_float.svg') }}" alt="Float"></div> {{-- REPLACE --}}
+                        <h3>Usimamizi Mahiri wa Float</h3>
+                        <p>Jua salio la float kwa kila mtandao (Airtel, Halotel, n.k.) kwa wakati halisi na upange vizuri mtaji wako.</p>
                     </div>
-                     <div class="feature-card">
-                        <div class="feature-icon">
-                                <img src="https://img.icons8.com/color/96/group.png" width="40" />
-                        </div>
-                        <h3>Huduma kwa Wakala Wengi</h3>
-                        <p>Kama una maduka mengi au wasaidizi, unaweza kusimamia akaunti zao zote kutoka sehemu moja kwa urahisi.</p>
+                     <div class="info-card">
+                        <div class="info-icon"><img src="{{ asset('images/icons/icon_multi_agent_shop.svg') }}" alt="Maduka Mengi"></div> {{-- REPLACE --}}
+                        <h3>Huduma kwa Maduka/Wakala Wengi</h3>
+                        <p>Kama una zaidi ya duka moja au wahudumu tofauti, simamia utendaji wao wote kupitia akaunti moja kuu.</p>
                     </div>
                 </div>
             </div>
@@ -323,19 +329,21 @@
 
         <section class="content-section" id="howitworks">
             <div class="container">
-                <h2 class="section-title">Jinsi Wakala Inavyofanya Kazi</h2>
+                 <div class="section-heading">
+                    <span class="eyebrow">Rahisi na Haraka</span>
+                    <h2 class="section-title">Anza Kutumia WakalaTEL Katika Hatua Chache</h2>
+                </div>
                 <div class="how-it-works-content">
-                    <div class="how-it-works-text">
+                    <div class="how-it-works-text steps-list">
                         <ol>
-                            <li><strong>Jisajili Chapchap:</strong> Fungua akaunti yako ya Wakala kwa hatua chache na rahisi.</li>
-                            <li><strong>Unganisha Simu Yako:</strong> Weka app yetu ya simu na uiruhusu kusoma SMS za miamala kwa usalama.</li>
-                            <li><strong>Pata Taarifa Papo Hapo:</strong> Kila SMS ya muamala inapopokelewa, data inaonekana moja kwa moja kwenye dashibodi yako ya Wakala.</li>
-                            <li><strong>Chambua na Ukuze:</strong> Tumia ripoti na takwimu zetu kufanya maamuzi bora na kukuza biashara yako ya uwakala.</li>
+                            <li><div><strong>Fungua Akaunti Yako:</strong> Mchakato rahisi wa kujisajili mtandaoni unaochukua dakika chache tu.</div></li>
+                            <li><div><strong>Pakua Programu ya Simu:</strong> Weka app yetu ya Android kwenye simu unayotumia kwa miamala ya uwakala.</div></li>
+                            <li><div><strong>Ruhusu Usomaji SMS:</strong> Programu itasoma SMS zako za miamala kiusalama na kuzituma kwenye mfumo wako wa WakalaTEL.</div></li>
+                            <li><div><strong>Tazama na Uchambue:</strong> Ingia kwenye dashibodi yako ya wavuti kuona miamala, salio la float, na ripoti za kina za biashara.</div></li>
                         </ol>
                     </div>
                     <div class="how-it-works-image">
-                        {{-- Using wakala-shops.jpg as the primary example, other images are for slider --}}
-                        <img src="{{ asset('images/mno/wakala-shops.jpg') }}" alt="Dashibodi ya Wakala ikionyesha miamala">
+                        <img src="{{ asset('images/mno/wakala-shops.jpg') }}" alt="Dashibodi ya WakalaTEL inayoonyesha urahisi wa matumizi">
                     </div>
                 </div>
             </div>
@@ -344,48 +352,48 @@
 
     <footer class="main-footer">
         <div class="container">
-            <p>© {{ date('Y') }} Wakala. Haki Zote Zimehifadhiwa.</p>
-            {{-- <p><a href="#">Sera ya Faragha</a> | <a href="#">Vigezo na Masharti</a></p> --}}
+            <p>© {{ date('Y') }} WakalaTEL. Imebuniwa Kurahisisha Uwakala.</p>
+            <div class="footer-links">
+                {{-- <a href="#">Sera ya Faragha</a>
+                <a href="#">Vigezo na Masharti</a>
+                <a href="#">Msaada</a> --}}
+            </div>
         </div>
     </footer>
 
     <script>
-        // Sticky Header (No change, should work)
-        const pageHeader = document.getElementById('pageHeader');
-        let lastScrollTop = 0;
-        if (pageHeader) {
+        const pageHeaderEl = document.getElementById('pageHeader');
+        let lastScrollPosition = 0;
+        let scrollTimeout;
+
+        if (pageHeaderEl) {
             window.addEventListener('scroll', function() {
-                let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                if (scrollTop > lastScrollTop && scrollTop > 80) { // Scrolling Down
-                    pageHeader.style.top = '-100px'; // Hide header
-                } else if (scrollTop < lastScrollTop || scrollTop <= 80) { // Scrolling Up or at top
-                     pageHeader.style.top = '0'; // Show header
-                }
-                 if (scrollTop <= 80) { // Always show at top or when very little scroll
-                     pageHeader.style.boxShadow = 'none';
+                let currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+                if (currentScroll <= 50) {
+                    pageHeaderEl.classList.remove('scrolled');
+                    pageHeaderEl.style.transform = 'translateY(0px)';
                 } else {
-                     pageHeader.style.boxShadow = 'var(--box-shadow-light)';
+                    pageHeaderEl.classList.add('scrolled');
+                    if (currentScroll > lastScrollPosition) { // Scrolling Down
+                        pageHeaderEl.style.transform = 'translateY(-100%)';
+                    } else { // Scrolling Up
+                        pageHeaderEl.style.transform = 'translateY(0px)';
+                    }
                 }
-                lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; // For Mobile or negative scrolling
+                lastScrollPosition = currentScroll <= 0 ? 0 : currentScroll;
             }, false);
         }
 
-
-        // Mobile Menu Toggle
-        const menuToggleBtn = document.getElementById('menuToggleBtn');
-        const mainNavElement = document.getElementById('mainNav');
-        if (menuToggleBtn && mainNavElement) {
-            menuToggleBtn.addEventListener('click', function() {
-                const isOpen = mainNavElement.classList.toggle('is-open');
-                menuToggleBtn.setAttribute('aria-expanded', isOpen.toString());
-                 if(isOpen){
-                    mainNavElement.style.display = 'flex'; // If you are using class to hide/show, ensure CSS matches
-                 } else {
-                    mainNavElement.style.display = 'none';
-                 }
+        const menuToggleBtnEl = document.getElementById('menuToggleBtn');
+        const mainNavEl = document.getElementById('mainNav');
+        if (menuToggleBtnEl && mainNavEl) {
+            menuToggleBtnEl.addEventListener('click', function() {
+                const isOpen = mainNavEl.classList.toggle('is-open');
+                menuToggleBtnEl.setAttribute('aria-expanded', isOpen.toString());
+                // The CSS primarily handles display: none/flex with .is-open
+                // Ensure your CSS for .main-nav and .main-nav.is-open is correct
             });
         }
     </script>
-
 </body>
 </html>
