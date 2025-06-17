@@ -146,6 +146,25 @@ class UserResource extends Resource
                             ->columnSpanFull(), // Repeater takes full width of this section
                     ]),
 
+
+                    Forms\Components\Section::make('Maduka Anayohudumia Wakala Huyu') // "Shops this Agent Serves"
+                    ->description('Chagua duka moja au zaidi ambapo wakala huyu atafanya kazi.')
+                    ->collapsible()
+                    ->schema([
+                        Select::make('assignedShops') // Name matches the relationship in User model
+                            ->label('Chagua Duka (au Maduka)') // "Select Shop (or Shops)"
+                            ->relationship(
+                                name: 'assignedShops', // The BelongsToMany relationship method name on User model
+                                titleAttribute: 'name'   // Display the 'name' of the Shop
+                            )
+                            ->multiple() // Allow selecting multiple shops
+                            ->preload()  // Load existing shops
+                            ->searchable()
+                            ->helperText('Kama wakala atahudumu kwenye duka maalumu, lichague hapa.')
+                            ->columnSpanFull(),
+                    ]),
+
+                    
                           Select::make('roles')
                           ->label('Majukumu')
                           ->relationship('roles', 'name')
