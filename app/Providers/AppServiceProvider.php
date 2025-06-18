@@ -44,9 +44,9 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('wakala-recent-transactions-table', RecentTransactionsTableWidget::class);
 
 
-        if (request()->isSecure() || str_contains($host, parse_url($appUrl, PHP_URL_HOST)) ) {
+        /*if (request()->isSecure() || str_contains($host, parse_url($appUrl, PHP_URL_HOST)) ) {
             URL::forceScheme('https');
-        }
+        }*/
 
     }
 }
