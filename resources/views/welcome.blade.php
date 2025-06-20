@@ -140,8 +140,8 @@
 
         .slide:nth-child(1) { background-image: url("{{ asset('images/mno/wakala-shops1.webp') }}"); animation-delay: 0s; } /* Keep delay for cycling */
         .slide:nth-child(2) { background-image: url("{{ asset('images/mno/wakala-shops2.jpg') }}"); animation-delay: 8s; }
-        .slide:nth-child(3) { background-image: url("{{ asset('images/mno/wakala-shops3.jpg') }}"); animation-delay: 16s; }
-        .slide:nth-child(4) { background-image: url("{{ asset('images/mno/wakala-shops4.jpg') }}"); animation-delay: 24s; }
+        .slide:nth-child(3) { background-image: url("{{ asset('images/mno/wakala-shops5.jpg') }}"); animation-delay: 16s; }
+        .slide:nth-child(4) { background-image: url("{{ asset('images/mno/wakala-shops6.jpg') }}"); animation-delay: 24s; }
 
         /* Section Styling - Reusable */
         .section-padding { padding: 100px 0; }
@@ -331,7 +331,7 @@
                               <p>Jua salio la float kwa kila mtandao (Airtel, Halotel, n.k.) kwa wakati halisi na upange vizuri mtaji wako.</p>
                           </div>
                            <div class="info-card">
-                              <div class="info-icon"><img src="https://cdn-icons-png.flaticon.com/512/3595/3595455.png" alt="Maduka Mengi"></div> {{-- REPLACE --}}
+                              <div class="info-icon"><img src="https://cdn-icons-png.flaticon.com/512/1570/1570887.png" alt="Maduka Mengi"></div> {{-- REPLACE --}}
                               <h3>Huduma kwa Maduka/Wakala Wengi</h3>
                               <p>Kama una zaidi ya duka moja au wahudumu tofauti, simamia utendaji wao wote kupitia akaunti moja kuu.</p>
                           </div>
