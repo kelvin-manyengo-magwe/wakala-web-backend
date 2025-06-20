@@ -154,11 +154,19 @@
         .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
         .info-card {
             background-color: var(--brand-light); padding: 2rem; border-radius: var(--border-radius-lg);
+            text-align: center;
             box-shadow: var(--shadow-md); text-align: left; transition: var(--transition-main);
             border-left: 5px solid transparent;
         }
         .info-card:hover { transform: translateY(-10px) scale(1.02); box-shadow: var(--shadow-lg); border-left-color: var(--brand-secondary); }
-        .info-icon img { height: 50px; width: auto; margin-bottom: 1.25rem; }
+        .info-icon img { height: 50px; width: auto; margin-bottom: 1.25rem;
+
+         }
+         .info-icon {  /*making the icon at the center*/
+               display: flex;
+               align-items: center;
+               justify-content: center;
+         }
         .info-card h3 { font-size: 1.35rem; font-weight: 600; color: var(--brand-dark); margin-bottom: 0.75rem; }
         .info-card p { font-size: 1rem; color: var(--brand-text-muted); line-height: 1.7; }
 
@@ -256,9 +264,9 @@
                         <li><a href="{{ url(config('filament.home_url', '/admin')) }}">Dashibodi</a></li>
                     @else
                         <li><a href="{{ route('filament.admin.auth.login') }}">Ingia</a></li>
-                        @if (Route::has('register'))
-                            <li><a href="{{ route('register') }}" class="nav-button">Anza Bure Sasa</a></li>
-                        @endif
+                          @if (Route::has('register'))
+                            <li><a href="{{ route('filament.panels.admin.id') }}" class="nav-button">Anza Bure Sasa</a></li>
+                            @endif
                     @endauth
                     </ul>
                 </nav>
@@ -278,7 +286,7 @@
                             WakalaTEL ni msaidizi wako mkuu kuelekea mafanikio.
                         </p>
                         @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="cta-button">Jaribu Bila Malipo Leo</a>
+                            <a href="{{ route('filament.admin.auth.register-admin') }}" class="cta-button">Jaribu Bila Malipo Leo</a>
                         @else
                              <a href="{{ url(config('filament.home_url', '/admin')) }}" class="cta-button">Nenda Kwenye Dashibodi</a>
                         @endif
@@ -303,26 +311,30 @@
                     </p>
                 </div>
                 <div class="info-grid">
-                    <div class="info-card">
-                        <div class="info-icon"><img src="{{ asset('images/icons/icon_realtime_sync.svg') }}" alt="Usawazishaji"></div> {{-- REPLACE --}}
-                        <h3>Usawazishaji Papo Hapo</h3>
-                        <p>Unganisha simu yako na upate taarifa za miamala yote moja kwa moja kwenye mfumo bila kuchelewa.</p>
-                    </div>
-                    <div class="info-card">
-                        <div class="info-icon"><img src="{{ asset('images/icons/icon_analytics.svg') }}" alt="Ripoti"></div> {{-- REPLACE --}}
-                        <h3>Ripoti za Kina za Biashara</h3>
-                        <p>Fahamu faida, kamisheni, na mienendo ya pesa zako kupitia ripoti zenye uchambuzi wa kina na rahisi kuelewa.</p>
-                    </div>
-                    <div class="info-card">
-                        <div class="info-icon"><img src="{{ asset('images/icons/icon_float.svg') }}" alt="Float"></div> {{-- REPLACE --}}
-                        <h3>Usimamizi Mahiri wa Float</h3>
-                        <p>Jua salio la float kwa kila mtandao (Airtel, Halotel, n.k.) kwa wakati halisi na upange vizuri mtaji wako.</p>
-                    </div>
-                     <div class="info-card">
-                        <div class="info-icon"><img src="{{ asset('images/icons/icon_multi_agent_shop.svg') }}" alt="Maduka Mengi"></div> {{-- REPLACE --}}
-                        <h3>Huduma kwa Maduka/Wakala Wengi</h3>
-                        <p>Kama una zaidi ya duka moja au wahudumu tofauti, simamia utendaji wao wote kupitia akaunti moja kuu.</p>
-                    </div>
+                          <div class="info-card">
+                                  <div class="info-icon">
+                                      <img src="https://cdn-icons-png.flaticon.com/512/1006/1006771.png" alt="Usawaziswaji" width="48">
+                                  </div>
+                                    <h3>Usawazishaji Papo Hapo</h3>
+                                    <p>Unganisha simu yako na upate taarifa za miamala yote moja kwa moja kwenye mfumo bila kuchelewa.</p>
+                          </div>
+                          <div class="info-card">
+                                    <div class="info-icon">
+                                          <img src="https://cdn-icons-png.flaticon.com/512/615/615075.png" alt="Analytics" width="48">
+                                    </div>
+                                    <h3>Ripoti za Kina za Biashara</h3>
+                                    <p>Fahamu faida, kamisheni, na mienendo ya pesa zako kupitia ripoti zenye uchambuzi wa kina na rahisi kuelewa.</p>
+                          </div>
+                          <div class="info-card">
+                              <div class="info-icon"><img src="https://cdn-icons-png.flaticon.com/512/2933/2933245.png" alt="Float"></div> {{-- REPLACE --}}
+                              <h3>Usimamizi Mahiri wa Float</h3>
+                              <p>Jua salio la float kwa kila mtandao (Airtel, Halotel, n.k.) kwa wakati halisi na upange vizuri mtaji wako.</p>
+                          </div>
+                           <div class="info-card">
+                              <div class="info-icon"><img src="https://cdn-icons-png.flaticon.com/512/3595/3595455.png" alt="Maduka Mengi"></div> {{-- REPLACE --}}
+                              <h3>Huduma kwa Maduka/Wakala Wengi</h3>
+                              <p>Kama una zaidi ya duka moja au wahudumu tofauti, simamia utendaji wao wote kupitia akaunti moja kuu.</p>
+                          </div>
                 </div>
             </div>
         </section>

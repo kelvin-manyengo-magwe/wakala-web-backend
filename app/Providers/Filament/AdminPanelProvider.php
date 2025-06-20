@@ -44,6 +44,7 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Red,
                 'danger' => Color::Red,
+                'gray' => Color::Slate,
             ])
 
             //->viteTheme('resources/css/filament.css')

@@ -2,6 +2,10 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Filament\Pages\AdminRegistration;
+use App\Filament\Pages\RegistrationSuccess;
+
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -14,6 +18,16 @@ Route::get('/test-sms', function() {
     return response()->json(['success' => $success]);
 });
 
+Route::group(['middleware' => ['web'], 'prefix' => config('filament.panels.admin.path','admin')], function () {
+
+    Route::get('/register', AdminRegistration::class)
+        ->middleware('guest:' . config('filament.panels.admin.auth.guard', 'web')) // Ensure only guests on the panel's guard can access
+        ->name(config('filament.panels.admin.id', 'admin') . '.auth.register'); // Matches potential internal Filament naming
+
+    Route::get('/usajili-umefanikiwa', RegistrationSuccess::class) // Matches slug
+         ->middleware('guest:' . config('filament.panels.admin.auth.guard', 'web')) // Should be accessible as guest
+         ->name(config('filament.panels.admin.id', 'admin') . '.pages.registration-success'); // Consistent naming
+});
 
 
 Route::get('/dashboard', function () {
