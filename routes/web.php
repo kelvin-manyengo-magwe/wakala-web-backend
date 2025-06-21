@@ -3,6 +3,9 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Filament\Pages\RegistrationSuccess;
+use App\Http\Controllers\Auth\NewAdminRegistrationController;
+use App\Filament\Pages\AdminRegistration;
+
 
 
 
@@ -17,29 +20,24 @@ Route::get('/test-sms', function() {
     return response()->json(['success' => $success]);
 });
 
-Route::get('/admin/shukrani-usajili', RegistrationSuccess::class) // Example path
+
+
+
+Route::group(['middleware' => ['web']], function () { // Use 'web' group for sessions etc.
+
+    // This route makes YOUR AdminRegistration page accessible at /admin/register
+    // It will use the simple layout because AdminRegistration::getLayout() defines it.
+    Route::get('/admin/register', AdminRegistration::class) // Route to your Filament Page class
+        ->middleware('guest:' . config('filament.panels.admin.auth.guard', 'web')) // IMPORTANT: GUEST for panel's guard
+        ->name('custom.public.admin.register'); // A unique route name FOR THIS CUSTOM ROUTE
+
+    // Success page (if RegistrationSuccess::getUrl() from panel listing isn't preferred)
+    Route::get('/admin/' . RegistrationSuccess::getSlug(), RegistrationSuccess::class)
+        ->middleware('guest:' . config('filament.panels.admin.auth.guard', 'web'))
+        ->name('custom.admin.registration.success'); // Name used in redirect
+});
+
+// Route for a simple "Registration Success" message (if you don't want a Filament Page for it)
+Route::get('/admin/shukrani-usanidi', \App\Filament\Pages\RegistrationSuccess::class) // Matches slug if it's 'shukrani-usanidi'
     ->middleware('guest:' . config('filament.panels.admin.auth.guard', 'web'))
-    ->name('admin.registration.success');
-
-
-    
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
-
-Route::get('/test-widget-class', function () {
-    $classExists = class_exists(\App\Filament\Widgets\SummaryStatsOverviewWidget::class);
-    if ($classExists) {
-        return "SUCCESS: Class App\Filament\Widgets\SummaryStatsOverviewWidget FOUND by PHP.";
-    } else {
-        return "ERROR: Class App\Filament\Widgets\SummaryStatsOverviewWidget NOT FOUND by PHP. Check path, name, namespace, and run composer dump-autoload.";
-    }
-});
-
-require __DIR__.'/auth.php';
+    ->name('admin.setup.success');

@@ -15,9 +15,11 @@ class RolesAndPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
-        //
-        // Creating roles
-    $adminRole = Role::create(['name' => 'admin']);
+
+            Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+            Role::firstOrCreate(['name' => 'wakala', 'guard_name' => 'web']);
+
+  /*  $adminRole = Role::create(['name' => 'admin']);
     $wakalaRole = Role::create(['name' => 'wakala']);
 
     // Creating permissions
@@ -37,6 +39,7 @@ class RolesAndPermissionsSeeder extends Seeder
                     // Assign specific permissions to wakala
                     $wakalaRole->givePermissionTo('manage users');
 
+
                     // Create admin user
                     $admin = User::create([
                     'name' => 'Admin',
@@ -51,6 +54,6 @@ class RolesAndPermissionsSeeder extends Seeder
                     'email' => 'wakala@example.com',
                     'password' => bcrypt('password'),
                     ]);
-                    $wakala->assignRole('wakala');
+                    $wakala->assignRole('wakala'); */
     }
 }

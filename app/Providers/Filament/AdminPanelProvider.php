@@ -2,7 +2,7 @@
 
 namespace App\Providers\Filament; // Or your specific panel provider namespace
 
-use Filament\Http\Middleware\Authenticate; // Filament's default auth middleware
+use Filament\Http\Middleware\Authenticate as FilamentAuthenticateMiddleware;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -10,6 +10,8 @@ use Filament\Pages;
 use App\Filament\Pages\AdminRegistration; // Your custom registration page class
 use App\Filament\Pages\RegistrationSuccess;
 use App\Filament\Widgets\AnalyticsDashboard;
+use App\Filament\Pages\CustomAdminLogin;
+use App\Filament\Pages\AdminSetupPage;
 
 
 
@@ -42,6 +44,7 @@ class AdminPanelProvider extends PanelProvider
             ->pages([ // Standard pages for the panel
                 Pages\Dashboard::class,
                 RegistrationSuccess::class, // So getUrl() works for this success page
+                AdminSetupPage::class
 
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
@@ -69,7 +72,8 @@ class AdminPanelProvider extends PanelProvider
                 \App\Http\Middleware\SetLocaleMiddleware::class, // Your locale middleware
             ])
             ->authMiddleware([ // Applied ONLY to routes that require authentication WITHIN the panel
-                Authenticate::class, // Filament's own authentication middleware
+              //  Authenticate::class,
+              FilamentAuthenticateMiddleware::class,
             ]);
     }
 }

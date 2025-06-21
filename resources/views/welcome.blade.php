@@ -254,6 +254,8 @@
             <button class="menu-toggle" id="menuToggleBtn" aria-label="Fungua Menyu" aria-expanded="false" aria-controls="mainNav">
                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
             </button>
+
+
             @if (Route::has('login'))
                 <nav class="main-nav" id="mainNav">
                     <ul>
@@ -270,7 +272,9 @@
                     @endauth
                     </ul>
                 </nav>
-            @endif
+           @endif
+
+
         </div>
     </header>
 
@@ -285,11 +289,11 @@
                             Pata udhibiti kamili wa miamala, fuatilia float kiurahisi, na utengeneze ripoti za faida kwa haraka.
                             WakalaTEL ni msaidizi wako mkuu kuelekea mafanikio.
                         </p>
-                        @if (Route::has('register'))
+                         @if (Route::has('register'))
                             <a href="{{ route('filament.admin.pages.register') }}" class="cta-button">Jaribu Bila Malipo Leo</a>
-                        @else
+                         @else
                              <a href="{{ url(config('filament.home_url', '/admin')) }}" class="cta-button">Nenda Kwenye Dashibodi</a>
-                        @endif
+                         @endif
                     </div>
                     <div class="hero-slider">
                         <div class="slide"></div>
