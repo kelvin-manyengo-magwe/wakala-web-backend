@@ -1,43 +1,66 @@
 <x-filament-panels::page.simple>
-    {{-- Custom Card Styling for a more focused registration form --}}
-    <div class="mx-auto w-full max-w-xl space-y-8 rounded-2xl bg-white p-8 shadow-2xl ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 md:p-12">
+    <style>
+        /* Optional: Custom styles for finer control if Tailwind classes are not enough */
+        .auth-form-container {
+            background-color: #fff; /* Ensure white background for the card on all themes */
+        }
+        @media (prefers-color-scheme: dark) {
+            .auth-form-container {
+                background-color: #1f2937; /* Tailwind gray-800 for dark mode card */
+            }
+        }
+        .form-input-focused {
+        border-color: #D7263D !important;
+        box-shadow: 0 0 0 1px #D7263D !important;
+    }
+    </style>
 
-        {{-- App Logo (Optional) --}}
-        <div class="flex justify-center">
-            {{-- Replace with your actual logo component or img tag --}}
-            {{-- Assuming you have resources/views/components/application-logo.blade.php --}}
-            <a href="{{ url('/') }}">
-                <x-application-logo class="h-16 w-auto text-primary-600 dark:text-primary-400" />
+    {{-- Main Card Container --}}
+
+
+        {{-- Logo or App Name --}}
+        <div class="mb-8 flex justify-center">
+            <a href="{{ url('/') }}" class="inline-block">
+                {{-- Assuming you have this brand component defined for your panel --}}
+                <x-filament.brand.wakala-brand />
+                {{-- Fallback if brand component not found or for simple text:
+                <span class="text-4xl font-extrabold tracking-tight text-primary-600 dark:text-primary-400">
+                    {{ config('app.name', 'WakalaTel') }}
+                </span>
+                --}}
             </a>
         </div>
 
-        <div class="space-y-2 text-center">
-            <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white md:text-3xl">
-                {{ $this->getTitle() }} {{-- Get title from Page class --}}
-            </h1>
+        {{-- Page Title and Subtitle --}}
+        <div class="mb-8 space-y-1 text-center">
+            
+
+
             <p class="text-sm text-gray-500 dark:text-gray-400">
-                Jaza fomu kwa makini ili ufungue akaunti yako ya Usimamizi.
+                Jaza fomu ifuatayo kwa usahihi ili kufungua akaunti yako ya usimamizi.
             </p>
         </div>
 
-        <form wire:submit.prevent="submitRegistrationForm" class="grid gap-y-6">
-            {{ $this->form }}
+        {{-- Registration Form --}}
+        <form wire:submit.prevent="submitRegistrationForm" class="grid grid-cols-1 gap-y-6">
+            {{ $this->form }} {{-- Renders Name, Email, Phone, Password, Password Confirmation --}}
 
-            {{-- Renders actions defined in getFormActions() of your PHP page class --}}
+            {{-- Form Actions (Submit Button) --}}
             <x-filament-panels::form.actions
-                :actions="$this->getFormActions()"
+                :actions="$this->getFormActions()" {{-- From AdminRegistration.php --}}
                 :full-width="true"
             />
         </form>
 
-        <div class="mt-6 text-center">
+        {{-- Link to Login Page --}}
+        <div class="mt-8 border-t border-gray-200 pt-6 text-center dark:border-gray-700">
             <p class="text-sm text-gray-600 dark:text-gray-400">
                 Tayari unayo akaunti?
-                <a  href="{{ route(config('filament.auth.login', 'filament.admin.auth.login')) }}"
-                    class="font-semibold text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 hover:underline">
+                <a  href="{{ filament()->getLoginUrl() }}"
+                    class="font-semibold text-primary-600 hover:text-primary-500 hover:underline dark:text-primary-400 dark:hover:text-primary-300">
                     Ingia Sasa Hapa.
                 </a>
             </p>
         </div>
-    </div>
+
 </x-filament-panels::page.simple>

@@ -15,4 +15,10 @@ return [
        'create' => 'Unda',
     ],
 
+    'actions' => [
+        'register' => [
+            'before' => 'Huna akaunti bado?', // "Don't have an account?"
+            'label' => 'Jisajili Hapa',    // "Register" / "Sign Up Here"
+        ],
+
 ];

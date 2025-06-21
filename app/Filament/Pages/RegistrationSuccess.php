@@ -1,40 +1,33 @@
 <?php
-
-namespace App\Filament\Pages; // Adjust if needed
-
+namespace App\Filament\Pages;
 use Filament\Pages\Page;
 
-class RegistrationSuccess extends Page
+class RegistrationSuccess extends Page // Class name is RegistrationSuccess
 {
     protected static ?string $title = 'Hongera! Usajili Umekamilika';
-    protected static string $view = 'filament.pages.registration-success-page';
+    protected static string $view = 'filament.pages.registration-success'; // Blade view path
     protected static bool $shouldRegisterNavigation = false;
-    protected static ?string $slug = 'usajili-mafanikio'; // URL e.g., /admin/usajili-mafanikio
 
-    public ?string $adminName = 'Msimamizi'; // Default name
+    // Needs a unique slug for its own URL: /admin/shukrani-usajili-admin
+    protected static ?string $slug = 'shukrani-usajili-admin';
+
+    public ?string $adminName = 'Msimamizi Mkuu';
 
     public function mount(): void
     {
-        $this->adminName = request()->query('adminName', 'Msimamizi Mpendwa');
-        if (auth()->guard(config('filament.auth.guard'))->check()) {
-             redirect(config('filament.home_url'));
+        $this->adminName = request()->query('adminName', $this->adminName);
+        if (auth()->guard(config('filament.panels.admin.auth.guard'))->check()) {
+             redirect(config('filament.panels.admin.home_url'));
         }
     }
 
-    protected function getViewData(): array
-    {
-        return [
-            'adminName' => $this->adminName,
-        ];
-    }
+    protected function getViewData(): array { return ['adminName' => $this->adminName]; }
 
-    protected function getViewLayout(): string
-    {
-        return static::getSimpleLayout();
-    }
+    public function getLayout(): string {
+            return 'filament-panels::components.layout.simple';
+          }
 
-    public static function panelHasLogo(): bool
-    {
-        return false;
-    }
+    public static function hasLogo(): bool {
+            return false;
+          }
 }
