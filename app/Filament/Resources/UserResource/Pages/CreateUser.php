@@ -22,6 +22,11 @@ class CreateUser extends CreateRecord
         $phoneNumber = $user->phone_no;
         $name = $user->name;
 
+        $tillNumbers = collect($user->till_no ?? [])->map(function ($entry) {
+                return "{$entry['mno_key']}: {$entry['till_no']}";
+              })->implode(', ');
+
+
         Log::debug("Preparing to send SMS", [
             'phone' => $phoneNumber,
             'name' => $name,
@@ -29,7 +34,7 @@ class CreateUser extends CreateRecord
 
         try {
             $smsService = new SmsService();
-            $message = "Habari {$name}, umefanikiwa kusajiliwa kama wakala kwenye mfumo wa Wakala App. "
+            $message = "Habari {$name}, umefanikiwa kusajiliwa kama wakala kwenye mfumo wa WakalaTel. Namba zako za Till ni : {$tillNumbers} ."
                      . "Tumia neno la siri lifuatalo kuingia: {$password}. "
                      . "Tafadhali hifadhi salama. Karibu!";
 

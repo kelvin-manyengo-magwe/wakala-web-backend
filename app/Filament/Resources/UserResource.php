@@ -95,7 +95,7 @@ class UserResource extends Resource
                             ->label('Namba ya Simu Kuu') // "Main Phone Number"
                             ->tel()
                             ->required()
-                            ->unique(ignoreRecord: true)
+                            //->unique(ignoreRecord: true)
                             ->helperText('Namba ya simu ambayo wakala atatumia kwa mawasiliano.'), // "Phone number agent will use for communication"
                         TextInput::make('location')
                             ->label('Eneo analopatikana') // "Location where agent is found"
