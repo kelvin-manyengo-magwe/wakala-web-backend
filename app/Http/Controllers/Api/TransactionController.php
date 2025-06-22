@@ -5,165 +5,174 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Customer;
-use App\Models\Device; // Ensure this is your Device model
+use App\Models\Device;
 use App\Models\OriginalSms;
 use App\Models\TransactionType;
 use App\Models\User;
+use App\Models\Shop;
 use App\Models\AirtelTransaction;
 use App\Models\HalotelTransaction;
-// Add other MNO Transaction Models here if you expand (e.g., MpesaTransaction, TigoTransaction)
+// If you add other MNOs like Mpesa, Tigo, import their models here:
+// use App\Models\MpesaTransaction;
+// use App\Models\TigoTransaction;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class TransactionController extends Controller
 {
+    /**
+     * Synchronize transactions from the mobile application.
+     */
     public function sync(Request $request)
     {
-        $authenticatedUser = $request->user(); // Wakala logged into mobile app
+        $authenticatedUser = $request->user(); // The Wakala logged in on the mobile app
+        $deviceIdFromMobile = $request->input('device_id'); // Unique ID from DeviceInfo.getUniqueId()
+
         $syncedCount = 0;
         $skippedCount = 0;
 
-        // --- Device ID from mobile request ---
-        $deviceIdFromMobile = $request->input('device_id'); // e.g., from DeviceInfo.getUniqueId()
-
+        // --- Basic Validations ---
         if (!$authenticatedUser) {
-            return response()->json(['success' => false, 'message' => 'Uthibitishaji umeshindikana.'], 401);
+            Log::warning('Transaction Sync: Unauthenticated API access attempt.');
+            return response()->json(['success' => false, 'message' => 'Uthibitishaji umeshindikana. Tafadhali ingia tena.'], 401);
         }
-        if (!$deviceIdFromMobile) {
-            return response()->json(['success' => false, 'message' => 'Kitambulisho cha kifaa kinahitajika.'], 400); // "Device ID is required."
+        if (empty($deviceIdFromMobile)) {
+            Log::warning("Transaction Sync: Missing device_id from user_id: {$authenticatedUser->id}.");
+            return response()->json(['success' => false, 'message' => 'Kitambulisho cha kifaa kinahitajika.'], 400);
         }
 
-        // --- Find or Create the Device Record ---
-        // Using the mobile's device_id as the primary key for your devices table is acceptable
-        // IF your devices.id column is designed to store this string (e.g., VARCHAR or CHAR, not auto-increment INT)
-        // AND if DeviceInfo.getUniqueId() is reliably unique and suitable as a primary key.
-        // Assuming devices.id is a string (like UUID or the string from DeviceInfo.getUniqueId())
-        $device = Device::firstOrCreate(
-            ['id' => $deviceIdFromMobile], // Try to find by this ID
-            ['name' => 'Kifaa Kipya - ' . $deviceIdFromMobile] // If creating, set a default name
-        );
-        // Note: If 'id' on your 'devices' table is auto-incrementing integer,
-        // then you'd do Device::firstOrCreate(['unique_mobile_id' => $deviceIdFromMobile], ...)
-        // and have a separate 'unique_mobile_id' column. But your current code suggests 'id' is the mobile's ID.
+        // --- Device Handling & Shop ID Determination ---
+        $device = Device::find($deviceIdFromMobile);
+        if (!$device) {
+            // Device ID sent from mobile does not exist in our devices table yet. Create it.
+            // The admin will need to assign this new device to a Shop in the Filament panel.
+            $deviceName = 'Kifaa Kipya - ' . Str::limit($deviceIdFromMobile, 25) . ' (cha Mtumiaji: '.$authenticatedUser->name.')';
+            $device = Device::create([
+                'id' => $deviceIdFromMobile, // Assuming devices.id can store this string value
+                'name' => $deviceName
+                // 'shop_id' will be null by default for new devices
+            ]);
+            Log::info("Transaction Sync: Kifaa kipya kimesajiliwa. Device ID '{$deviceIdFromMobile}' na Mtumiaji '{$authenticatedUser->name}'. Msimamizi anahitaji kukihusisha na Duka.");
+        }
 
-        // --- Determine Shop ID based on the device ---
         $shopId = null;
         if ($device->shop_id) {
+            // Primary way: The device is registered and assigned to a shop.
             $shopId = $device->shop_id;
-        } elseif ($authenticatedUser->assignedShops()->exists() && $authenticatedUser->assignedShops()->count() === 1) {
-            // Fallback: If user is assigned to ONLY ONE shop, assume that shop.
-            $shopId = $authenticatedUser->assignedShops()->first()->id;
-        } else {
-            Log::warning("Transaction Sync: Could not determine shop for device_id '{$deviceIdFromMobile}' used by user_id '{$authenticatedUser->id}'. Transactions will have NULL shop_id.");
-            // No shop_id found. Transactions will be linked to the user but not a specific shop via device.
-            // Admin will need to assign this device ($device) to a shop in Filament Panel.
+            Log::info("Transaction Sync: Shop ID '{$shopId}' found via Device '{$deviceIdFromMobile}'.");
+        } elseif ($authenticatedUser->assignedShops()->count() === 1) {
+            // Fallback: If device isn't assigned, but the Wakala (User) is assigned to ONLY ONE shop.
+            $userOnlyShop = $authenticatedUser->assignedShops()->first(); // Requires assignedShops() relationship on User model
+            if($userOnlyShop){
+                 $shopId = $userOnlyShop->id;
+                 Log::info("Transaction Sync: Shop ID '{$shopId}' ('{$userOnlyShop->name}') found from User '{$authenticatedUser->name}'s single shop assignment for Device '{$deviceIdFromMobile}'.");
+            }
         }
 
+        if (is_null($shopId)) {
+            Log::warning("Transaction Sync: Imeshindikana kutambua Duka kwa muamala unaotoka kwa Mtumiaji ID: {$authenticatedUser->id}, Kifaa ID: {$deviceIdFromMobile}. Miamala itawekwa na shop_id=NULL.");
+        }
+
+        // --- Process Each Transaction ---
         foreach ($request->transactions as $txnData) {
-            $mno = strtolower(trim($txnData['mno'] ?? 'unknownMNO')); // Provide a default if MNO is missing
-            $refNo = $txnData['ref_no'];
+            $mnoIdentifier = strtolower(trim($txnData['mno'] ?? 'haijulikani')); // 'airtel', 'halotel', etc.
+            $referenceNumber = trim($txnData['ref_no'] ?? '');
 
-            if (empty($refNo)) {
-                Log::warning("Transaction Sync: Skipping transaction due to empty reference number.", $txnData);
+            if (empty($referenceNumber)) {
+                Log::warning("Transaction Sync: Transaction from user_id: {$authenticatedUser->id}, MNO: {$mnoIdentifier} is missing ref_no. Skipping.", ['transaction_data' => $txnData]);
                 $skippedCount++;
                 continue;
             }
 
-            // Determine target model and check if transaction already exists in the correct table
-            $targetModelInstance = null;
-            $transactionModelClass = null;
-
-            switch ($mno) {
-                case 'airtel':
-                    $transactionModelClass = AirtelTransaction::class;
-                    break;
-                case 'halotel':
-                    $transactionModelClass = HalotelTransaction::class;
-                    break;
-                // case 'mpesa':
-                //     $transactionModelClass = MpesaTransaction::class; // Example for future
-                //     break;
-                // case 'tigo':
-                //     $transactionModelClass = TigoTransaction::class; // Example for future
-                //     break;
+            $targetModelClass = null; // e.g., AirtelTransaction::class
+            switch ($mnoIdentifier) {
+                case 'airtel':  $targetModelClass = AirtelTransaction::class; break;
+                case 'halotel': $targetModelClass = HalotelTransaction::class; break;
+                // Add other MNOs here:
+                // case 'mpesa':   $targetModelClass = MpesaTransaction::class; break;
+                // case 'tigo':    $targetModelClass = TigoTransaction::class; break;
                 default:
-                    Log::warning("Transaction Sync: Unsupported MNO '{$mno}' for ref '{$refNo}'. Skipping.");
+                    Log::warning("Transaction Sync: MNO '{$mnoIdentifier}' haitumiki kwa ref '{$referenceNumber}' from user_id: {$authenticatedUser->id}. Inarukwa.");
                     $skippedCount++;
-                    continue 2; // Continue to next iteration of foreach ($request->transactions...)
+                    continue 2; // Continues to the next transaction in the $request->transactions loop
             }
 
-            if ($transactionModelClass::where('ref_no', $refNo)->exists()) {
+            // Check for duplicate transaction using ONLY ref_no within the specific MNO's table
+            if ($targetModelClass::where('ref_no', $referenceNumber)->exists()) {
+                // Log::info("Transaction Sync: Duplicate ref_no '{$referenceNumber}' for MNO '{$mnoIdentifier}' (table '{$targetModelClass}') from user_id: {$authenticatedUser->id}. Skipping.");
                 $skippedCount++;
                 continue;
             }
-            $targetModelInstance = new $transactionModelClass();
 
+            $targetModelInstance = new $targetModelClass();
 
-            // --- Get or create related records (Customer, Type, OriginalSms) ---
-            // These are fine as they were, using firstOrCreate for Customer and Type
+            // Related records
+            $customerName = trim($txnData['customer_name'] ?? 'Mteja (Hakuna Jina)');
+            $customerNumber = trim($txnData['customer_no'] ?? '');
+            $customerNumber = !empty($customerNumber) ? $customerNumber : '000000000'; // Ensure a value
+
             $customer = Customer::firstOrCreate(
-                ['phone_number' => $txnData['customer_no']],
-                ['name' => $txnData['customer_name']]
+                ['phone_number' => $customerNumber],
+                ['name' => $customerName]
             );
-            $typeName = $this->normalizeType($txnData['type']);
-            $type = TransactionType::firstOrCreate(['name' => $typeName]);
 
-            // Handling OriginalSms (ensure raw_sms column exists and is text/longtext)
-            $rawSmsContent = is_string($txnData['raw']) ? $txnData['raw'] : json_encode($txnData['raw']);
-            if (empty(trim($rawSmsContent))) { // Prevent saving empty SMS which might cause DB error if not nullable
-                $sms = null; // Or handle differently, e.g. assign a default placeholder ID if sms_id is NOT NULL
-            } else {
-                $sms = OriginalSms::create(['raw_sms' => $rawSmsContent]);
+            $transactionTypeName = $this->normalizeType($txnData['type']);
+            $type = TransactionType::firstOrCreate(['name' => $transactionTypeName]);
+
+            $rawSmsContent = is_string($txnData['raw']) ? trim($txnData['raw']) : json_encode($txnData['raw']);
+            $smsRecord = null;
+            if (!empty($rawSmsContent) && $rawSmsContent !== 'null' && $rawSmsContent !== '""') {
+                $smsRecord = OriginalSms::create(['raw_sms' => $rawSmsContent]);
             }
 
-
-            // --- Construct Payload ---
+            // Prepare payload for creating the transaction
             $payload = [
-                // device_id: The ID of the 'Device' record in your database (which matches $deviceIdFromMobile)
-                'device_id' => $device->id,
-                'customer_id' => $customer->id,
-                'sms_id' => $sms ? $sms->id : null, // Handle if SMS was not created
-                'type_id' => $type->id,
-                'user_id' => $authenticatedUser->id, // ID of the logged-in Wakala
-                'shop_id' => $shopId, // ID of the shop associated with the device/user
-                'ref_no' => $refNo,
-                'date' => Carbon::parse($txnData['date'])->toDateTimeString(), // Ensure correct datetime format
-                'amount' => (float) ($txnData['amount'] ?? 0),
-                'commission' => (float) ($txnData['commission'] ?? 0),
-                'float_balance' => (float) ($txnData['float_balance'] ?? $txnData['float'] ?? 0),
-                'raw_payload' => json_encode($txnData), // Storing the whole transaction data from mobile
-                'processed_at' => isset($txnData['createdAt']) ? Carbon::parse($txnData['createdAt'])->toDateTimeString() : now(),
-                // Ensure all fields in $payload are in the $fillable array of AirtelTransaction, HalotelTransaction models.
+                'device_id'     => $device->id, // From device found/created earlier
+                'customer_id'   => $customer->id,
+                'sms_id'        => $smsRecord?->id,
+                'type_id'       => $type->id,
+                'user_id'       => $authenticatedUser->id, // The Wakala
+                'shop_id'       => $shopId,               // The Shop
+                'ref_no'        => $referenceNumber,
+                'date'          => Carbon::parse($txnData['date'])->toDateTimeString(),
+                'amount'        => (float)($txnData['amount'] ?? 0.00),
+                'commission'    => (float)($txnData['commission'] ?? 0.00),
+                'float_balance' => (float)($txnData['float_balance'] ?? $txnData['float'] ?? 0.00),
+                'raw_payload'   => json_encode($txnData), // Original data from mobile for this transaction
+                'processed_at'  => isset($txnData['createdAt']) && !empty($txnData['createdAt'])
+                                     ? Carbon::parse($txnData['createdAt'])->toDateTimeString()
+                                     : Carbon::parse($txnData['date'])->toDateTimeString(),
+                // DO NOT include 'mno' here if individual tables (AirtelTransaction, etc.) don't have it.
             ];
 
             try {
-                $newTransaction = $targetModelInstance->create($payload);
-                // broadcast(new TransactionSynced($newTransaction));
+                $targetModelInstance->fill($payload)->save(); // Creates the transaction
                 $syncedCount++;
             } catch (\Exception $e) {
-                Log::error("Transaction Sync: Failed to create transaction for ref '{$refNo}'. Error: " . $e->getMessage(), ['payload' => $payload]);
+                Log::error("Transaction Sync: FAILED TO SAVE transaction. Ref: '{$referenceNumber}', MNO: '{$mnoIdentifier}', User: {$authenticatedUser->id}. Error: " . $e->getMessage(), ['payload_keys' => array_keys($payload), 'exception_trace' => $e->getTraceAsString()]);
                 $skippedCount++;
             }
         }
 
-        $message = "Miamala {$syncedCount} imesawazishwa kikamilifu.";
+        $message = "{$syncedCount} miamala imesawazishwa kikamilifu.";
         if ($skippedCount > 0) {
-            $message .= " Miamala {$skippedCount} ilirukwa (huenda tayari ipo au MNO haitumiki).";
+            $message .= " {$skippedCount} miamala ilirukwa (huenda tayari ipo au MNO haitumiki).";
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => $message,
-            'user_id' => $authenticatedUser->id
-        ]);
+        return response()->json(['success' => true, 'message' => $message, 'user_id' => $authenticatedUser->id]);
     }
 
-    private function normalizeType($type)
+    private function normalizeType($typeFromMobile): string
     {
-        $type = strtolower(trim((string)$type));
-        if (in_array($type, ['weka', 'deposit', 'kuweka', 'deposits'])) return 'deposit'; // Added 'deposits'
-        if (in_array($type, ['toa', 'withdrawal', 'kutoa', 'withdrawals'])) return 'withdrawal'; // Added 'withdrawals'
-        return $type; // Return original if not matched, or a default like 'unknown'
+        $type = strtolower(trim((string)$typeFromMobile));
+        if (in_array($type, ['weka', 'deposit', 'deposits', 'kuweka'])) {
+            return 'deposit';
+        }
+        if (in_array($type, ['toa', 'withdrawal', 'withdrawals', 'kutoa'])) {
+            return 'withdrawal';
+        }
+        Log::info("Transaction Sync: Unrecognized transaction type: '{$typeFromMobile}' normalized to '{$type}'. Consider adding to normalizeType function.");
+        return !empty($type) ? $type : 'unknown'; // Return cleaned type or default
     }
 }

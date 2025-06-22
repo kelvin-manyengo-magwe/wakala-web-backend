@@ -1,127 +1,120 @@
 <?php
 
-namespace App\Filament\Pages; // Or App\Filament\Admin\Pages if namespaced
+namespace App\Filament\Pages;
 
 use Filament\Pages\Page;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Concerns\InteractsWithForms; // For the shop filter form
-use Filament\Forms\Contracts\HasForms;         // For the shop filter form
+use Filament\Forms\Components\DatePicker; // For date filtering
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use App\Models\Shop;
 use App\Models\AirtelTransaction;
 use App\Models\HalotelTransaction;
-// Add other MNO Transaction models as you create them
-use Illuminate\Support\Collection; // For initializing transaction collections
-use Carbon\Carbon; // For date formatting if you do it here, though Blade is doing it
+// ... other MNO Transaction Models ...
+use Illuminate\Support\Collection as SupportCollection;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Log;
 
-class MadukaMiamalaPage extends Page implements HasForms // REMOVED HasTable
+class MadukaMiamalaPage extends Page implements HasForms
 {
-    use InteractsWithForms; // Trait for the shop selection form
-    // REMOVED: use InteractsWithTable;
+    use InteractsWithForms;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text'; // Changed icon slightly
+    protected static ?string $navigationIcon = 'heroicon-o-queue-list'; // Updated icon
     protected static string $view = 'filament.pages.maduka-miamala-page';
     protected static ?string $navigationGroup = 'Usimamizi wa Biashara';
-    protected static ?int $navigationSort = 22;
-    protected static ?string $title = 'Miamala ya Maduka';
+    protected static ?int $navigationSort = 23;
+    protected static ?string $title = 'Miamala kwa Duka';
 
-    // Data for the shop filter form
-    public ?array $shopFilterData = [
-        'selectedShopId' => null, // Initialize
-    ];
+    // --- STATE PROPERTIES for the form ---
+    public ?string $selectedShopId = null;
+    public ?string $startDate = null;
+    public ?string $endDate = null;
 
-    // Public properties to hold transactions for Blade view
-    public Collection $airtelShopTransactions;
-    public Collection $halotelShopTransactions;
-    // public Collection $mpesaShopTransactions; // etc. for other MNOs
+    // --- Properties to hold transaction lists ---
+    public SupportCollection $airtelShopTransactionsList;
+    public SupportCollection $halotelShopTransactionsList;
+    // ... other MNO lists ...
 
-    // Property to hold the name of the selected shop for display
     public ?string $displaySelectedShopName = null;
 
-
-    public static function getNavigationLabel(): string
-    {
-        return 'Maduka na Miamala';
-    }
+    public static function getNavigationLabel(): string { return 'Miamala kwa Duka'; }
 
     public function mount(): void
     {
-        // Initialize collections as empty
-        $this->airtelShopTransactions = new Collection();
-        $this->halotelShopTransactions = new Collection();
-        // $this->mpesaShopTransactions = new Collection();
+        $this->airtelShopTransactionsList = new SupportCollection();
+        $this->halotelShopTransactionsList = new SupportCollection();
 
-        // Fill the form which will set $this->shopFilterData correctly.
-        // Since 'selectedShopId' in shopFilterData is null by default, loadShopTransactions will handle it.
-        $this->form->fill();
-        // Initial load attempt (will be empty as no shop is selected)
-        $this->loadShopTransactions();
+        // Set default date range for filter (e.g., this month)
+        $this->startDate = Carbon::now()->startOfMonth()->toDateString();
+        $this->endDate = Carbon::now()->endOfMonth()->toDateString();
+
+        $this->form->fill([ // Initialize form fields with current property values
+            'selectedShopId' => $this->selectedShopId,
+            'startDate' => $this->startDate,
+            'endDate' => $this->endDate,
+        ]);
+        // $this->loadShopTransactions(); // Let Livewire's updated hook trigger first load if needed, or explicit button
     }
 
-    // This is THE form for this page, used for the shop filter
     public function form(Form $form): Form
     {
         return $form
             ->schema([
-                Select::make('selectedShopId') // Field name is 'selectedShopId'
+                Select::make('selectedShopId')
                     ->label('Chagua Duka')
-                    ->options(Shop::orderBy('name')->pluck('name', 'id')->all()) // Ordered shops
-                    ->searchable()
-                    ->live() // Crucial for triggering update
-                    ->placeholder('Tafadhali chagua duka...')
-                    ->helperText('Chagua duka ili kuona miamala yake husika.'),
+                    ->options(Shop::orderBy('name')->pluck('name', 'id')->all())
+                    ->searchable()->live()->placeholder('Tafadhali chagua duka...'),
+                DatePicker::make('startDate')->label('Kuanzia Tarehe')->live()->maxDate(fn () => $this->endDate ?? now()),
+                DatePicker::make('endDate')->label('Hadi Tarehe')->live()->default(now())->minDate(fn () => $this->startDate ?? null),
             ])
-            ->statePath('shopFilterData'); // All fields in this form will be under $this->shopFilterData
+            ->columns(3); // Layout filters in a row
     }
 
-    // This Livewire lifecycle hook is automatically called when a 'live' property
-    // inside $shopFilterData (like 'selectedShopId') is updated.
-    public function updatedShopFilterDataSelectedShopId($value): void
-    {
-        // The $value here is the new shop ID
-        // $this->shopFilterData['selectedShopId'] is already updated by Livewire
-        $this->loadShopTransactions(); // Re-fetch transactions for the newly selected shop
-    }
+    // Livewire hooks for when filter properties change
+    public function updatedSelectedShopId($value): void { $this->loadShopTransactions(); }
+    public function updatedStartDate($value): void { $this->loadShopTransactions(); }
+    public function updatedEndDate($value): void { $this->loadShopTransactions(); }
 
     public function loadShopTransactions(): void
     {
-        $shopIdToLoad = $this->shopFilterData['selectedShopId'] ?? null;
+        Log::info("Kupakia miamala kwa Duka ID: {$this->selectedShopId}, Kuanzia: {$this->startDate}, Hadi: {$this->endDate}");
 
-        if (!$shopIdToLoad) {
-            $this->airtelShopTransactions = new Collection();
-            $this->halotelShopTransactions = new Collection();
-            $this->displaySelectedShopName = null;
-            // Reset other MNO transaction collections...
+        if (!$this->selectedShopId) {
+            $this->airtelShopTransactionsList = new SupportCollection();
+            $this->halotelShopTransactionsList = new SupportCollection();
+            $this->displaySelectedShopName = 'Tafadhali Chagua Duka';
             return;
         }
 
-        $selectedShopInstance = Shop::find($shopIdToLoad);
-        $this->displaySelectedShopName = $selectedShopInstance?->name;
+        $selectedShopInstance = Shop::find($this->selectedShopId);
+        $this->displaySelectedShopName = $selectedShopInstance?->name ?? 'Duka Halijulikani';
 
-        $this->airtelShopTransactions = AirtelTransaction::where('shop_id', $shopIdToLoad)
-            ->with(['user', 'customer', 'type'])
-            ->latest('processed_at')
-            ->get();
+        $startDateFilter = $this->startDate ? Carbon::parse($this->startDate)->startOfDay() : null;
+        $endDateFilter = $this->endDate ? Carbon::parse($this->endDate)->endOfDay() : Carbon::now()->endOfDay(); // Default end to today if not set
 
-        $this->halotelShopTransactions = HalotelTransaction::where('shop_id', $shopIdToLoad)
-            ->with(['user', 'customer', 'type'])
-            ->latest('processed_at')
-            ->get();
+        $applyDateFilters = function (Builder $query) use ($startDateFilter, $endDateFilter) {
+            return $query
+                ->when($startDateFilter, fn(Builder $q) => $q->where('processed_at', '>=', $startDateFilter))
+                ->when($endDateFilter, fn(Builder $q) => $q->where('processed_at', '<=', $endDateFilter));
+        };
 
-        // Load for other MNOs and store in their respective public properties
-        // e.g., $this->mpesaShopTransactions = MpesaTransaction::where('shop_id', $shopIdToLoad)->...->get();
+        // Helper for querying to reduce repetition
+        $getTransactionsForMno = function (string $modelClass) use ($applyDateFilters) {
+            return $modelClass::query()
+                ->where('shop_id', $this->selectedShopId)
+                ->when($this->startDate || $this->endDate, $applyDateFilters) // Apply date filters if any are set
+                ->with(['user', 'customer', 'type'])
+                ->latest('processed_at')
+                ->take(200) // Limiting results for performance
+                ->get();
+        };
+
+        $this->airtelShopTransactionsList = $getTransactionsForMno(AirtelTransaction::class);
+        $this->halotelShopTransactionsList = $getTransactionsForMno(HalotelTransaction::class);
+
+        Log::info("Miamala ya Airtel iliyopakiwa: " . $this->airtelShopTransactionsList->count());
+        Log::info("Miamala ya Halotel iliyopakiwa: " . $this->halotelShopTransactionsList->count());
     }
-
-    // No getTableQuery() or table() method definition needed if not using HasTable/InteractsWithTable traits
-    // to render a MAIN Filament Table on this page. We are rendering simple HTML tables in Blade.
-
-    // Data passed to the Blade view automatically includes public properties.
-    // If you need extra transformations for Blade, you can use this, but not strictly necessary
-    // for displaySelectedShopName as it's now a public property.
-    // protected function getViewData(): array
-    // {
-    //     return [
-    //         'currentShopName' => $this->displaySelectedShopName,
-    //     ];
-    // }
 }

@@ -76,8 +76,8 @@ class AnalyticsDashboard extends BaseWidget
         $formatMnoDescriptionWithCount = function($logoUrl, $altText, $count) {
             $countText = number_format($count) . ' Miamala'; // "Miamala" is Swahili for Transactions
             return new HtmlString(
-                '<div class="flex items-center justify-between text-xs mt-1">' .
-                    '<img src="' . $logoUrl . '" alt="' . $altText . '" class="h-5 w-auto object-contain mr-2">' . // mr-2 provides space after logo
+                '<div class="flex items-center justify-between gap-4 text-xs mt-1">' .
+                    '<img src="' . $logoUrl . '" alt="' . $altText . '" class="h-8 w-10 object-contain mr-2">' . // mr-2 provides space after logo
                     '<span>' . $countText . '</span>' .
                 '</div>'
             );
@@ -117,10 +117,10 @@ class AnalyticsDashboard extends BaseWidget
                 ->description($formatMnoDescriptionWithCount($airtelLogoUrl, 'Airtel Money Logo', $airtelWithdrawalsCount))
                 ->color('danger'),
             Stat::make('Kamisheni ya Airtel', 'Tsh ' . number_format($airtelCommission))
-                ->description(new HtmlString('<img src="' . $airtelLogoUrl . '" alt="Airtel Money Logo" class="h-6 w-auto object-contain">'))
+                ->description(new HtmlString('<img src="' . $airtelLogoUrl . '" alt="Airtel Money Logo" class="h-8 w-10 object-contain">'))
                 ->color('primary'),
             Stat::make('Floti ya Airtel', 'Tsh ' . number_format($airtelLatestFloat ?? 0))
-                ->description(new HtmlString('<img src="' . $airtelLogoUrl . '" alt="Airtel Money Logo" class="h-6 w-auto object-contain">'))
+                ->description(new HtmlString('<img src="' . $airtelLogoUrl . '" alt="Airtel Money Logo" class="h-8 w-10 object-contain">'))
                 ->color('warning'),
 
             // Row 3: Halotel Specifics - With Logo AND Count
@@ -131,10 +131,10 @@ class AnalyticsDashboard extends BaseWidget
                 ->description($formatMnoDescriptionWithCount($halotelLogoUrl, 'Halopesa Logo', $halotelWithdrawalsCount))
                 ->color('danger'),
             Stat::make('Kamisheni ya Halotel', 'Tsh ' . number_format($halotelCommission))
-                ->description(new HtmlString('<img src="' . $halotelLogoUrl . '" alt="Halopesa Logo" class="h-6 w-auto object-contain">'))
+                ->description(new HtmlString('<img src="' . $halotelLogoUrl . '" alt="Halopesa Logo" class="h-8 w-10 object-contain">'))
                 ->color('primary'),
             Stat::make('Floti ya Halotel', 'Tsh ' . number_format($halotelLatestFloat ?? 0))
-                ->description(new HtmlString('<img src="' . $halotelLogoUrl . '" alt="Halopesa Logo" class="h-6 w-auto object-contain">'))
+                ->description(new HtmlString('<img src="' . $halotelLogoUrl . '" alt="Halopesa Logo" class="h-8 w-10 object-contain">'))
                 ->color('warning'),
 
             // Row 4: Admin Info
