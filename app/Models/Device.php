@@ -24,12 +24,12 @@ class Device extends Model
 
     public function shop(): BelongsTo
       {
-          return $this->belongsTo(Shop::class);
+          return $this->belongsTo(Shop::class, 'shop_id', 'id');
       }
 
       public function getDeviceIdDisplayAttribute(): string
           {
               return ($this->name ? $this->name . ' (' : '') . $this->id . ($this->name ? ')' : '');
           }
-          
+
 }

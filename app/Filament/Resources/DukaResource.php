@@ -103,36 +103,40 @@ class DukaResource extends Resource
                         ->visible(fn (string $operation) => $operation === 'edit'), // ONLY on edit
                 ]),
 
-            Forms\Components\Section::make('Vifaa vya Dukani (Simu za Miamala)')
-                ->schema([
-                    // Field for CREATE page
-                     Select::make('devices_create_ids') // Distinct name for create
-                        ->label('Chagua Vifaa Vilivyosajiliwa')
-                        ->options( // Example: show devices not yet assigned OR assigned to the current shop (if somehow an ID is passed to create, generally not needed)
-                            Device::query()
-                                // ->whereNull('shop_id') // To only show unassigned devices
-                                ->get() // For this example, get all devices
-                                ->mapWithKeys(fn (Device $device) => [$device->id => $device->device_id_display]) // Uses accessor from Device model
-                                ->all()
-                        )
-                        ->multiple()
-                        ->searchable()
-                        ->preload(false)
-                        ->helperText('Kama kifaa hakipo, kisajili kwanza kupitia sehemu ya "Vifaa".')
-                        ->columnSpanFull()
-                        ->visible(fn (string $operation) => $operation === 'create'),
+                Forms\Components\Section::make('Vifaa vya Dukani (Simu za Miamala)')
+                    ->schema([
+                        // --- Field for CREATE page (devices_create_ids) ---
+                         Select::make('devices_create_ids')
+                            ->label('Sajili Vifaa Kwenye Duka Hili (Upangaji Mpya)')
+                            ->options(
+                                Device::query()
+                                    ->whereNull('shop_id') // Example: Show only unassigned devices for selection
+                                    ->get()
+                                    ->mapWithKeys(fn (Device $device) => [$device->id => $device->device_id_display])
+                                    ->all()
+                            )
+                            ->multiple()
+                            ->searchable()
+                            ->preload(false)
+                            ->helperText('Chagua vifaa ambavyo havijapangiwa duka. Sajili kifaa kipya kwanza kama hakipo.')
+                            ->columnSpanFull()
+                            ->visible(fn (string $operation) => $operation === 'create'),
 
-                    // Field for EDIT page
-                    Select::make('devices') // Matches relationship name
-                        ->label('Chagua Vifaa Vilivyosajiliwa')
-                        ->relationship(name: 'devices', titleAttribute: 'device_id_display')
-                        ->multiple()
-                        ->preload()
-                        ->searchable()
-                        ->helperText('Kama kifaa hakipo, kisajili kwanza.')
-                        ->columnSpanFull()
-                        ->visible(fn (string $operation) => $operation === 'edit'),
-                ]),
+                        // --- Field for EDIT page (devices) ---
+                        Select::make('devices') // This NAME must match the relationship method in Shop model
+                            ->label('Vifaa Vilivyosajiliwa na Duka Hili')
+                            ->relationship(
+                                name: 'devices' // This uses the devices() HasMany relationship from Shop model
+                                // NO titleAttribute here if using getOptionLabelFromRecordUsing extensively
+                            )
+                            ->getOptionLabelFromRecordUsing(fn (Device $record): string => $record->device_id_display) // <<< USE THIS
+                            ->multiple()
+                            ->preload()
+                            ->searchable(['name', 'id']) // Allow searching actual columns on 'devices' table
+                            ->helperText('Chagua vifaa vya kuongeza au kuondoa kwenye duka hili.')
+                            ->columnSpanFull()
+                            ->visible(fn (string $operation) => $operation === 'edit'),
+                    ]),
         ]);
     }
 

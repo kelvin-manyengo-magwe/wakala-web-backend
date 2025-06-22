@@ -66,10 +66,9 @@ class CreateDuka extends CreateRecord
         // $this->record is the newly created Shop instance.
 
         // Sync the 'assignedWakalas' BelongsToMany relationship
-        if (!empty($this->syncableWakalas)) {
-            // Assumes 'assignedWakalas' is the name of the BelongsToMany relationship method in Shop.php
-            $this->record->assignedWakalas()->sync($this->syncableWakalas);
-        }
+        if (!empty($this->syncableDevices)) { // syncableDevices gets populated from 'devices_create_ids'
+                    Device::whereIn('id', $this->syncableDevices)->update(['shop_id' => $this->record->id]);
+            }
 
         // Sync the 'devices' relationship
         if (!empty($this->syncableDevices)) {

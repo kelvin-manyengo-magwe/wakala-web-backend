@@ -60,4 +60,12 @@ class Shop extends Model
         }
         return collect($this->mno_initial_allocations)->sum('initial_float');
     }
+
+
+    public function devices(): HasMany
+    {
+        return $this->hasMany(Device::class, 'shop_id', 'id');
+    }
+
+
 }
