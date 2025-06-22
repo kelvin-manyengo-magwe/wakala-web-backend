@@ -35,9 +35,13 @@ class AdminPanelProvider extends PanelProvider
                 'gray'    => Color::Slate,
             ])
             ->renderHook(
-                'panels::global-search.after',
-                 fn () => view('components.filament.language-switcher.language-switcher')
+                    'panels::global-search.after',
+                     fn () => view('components.filament.language-switcher.language-switcher')
                )
+               ->renderHook(
+                     'panels::global-search.after',
+                     fn () => view('components.filament.notifications-indicator')
+                     )
             ->brandLogo(fn () => view('components.filament.brand.wakala-brand'))
             ->darkModeBrandLogo(fn () => view('components.filament.brand.wakala-brand', ['darkMode' => true]))
             ->brandLogoHeight('4rem')
