@@ -87,6 +87,7 @@ class UserResource extends Resource
                         TextInput::make('email')
                             ->label('Barua Pepe') // "Email"
                             ->email()
+                            ->nullable()
                             ->helperText('Barua pepe ya wakala, si lazima')
                             ->maxLength(255)
                             ->unique(ignoreRecord: true),
@@ -164,7 +165,7 @@ class UserResource extends Resource
                             ->columnSpanFull(),
                     ]),
 
-                    
+
                           Select::make('roles')
                           ->label('Majukumu')
                           ->relationship('roles', 'name')

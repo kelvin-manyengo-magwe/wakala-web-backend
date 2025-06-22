@@ -44,7 +44,7 @@ class DukaResource extends Resource
             Forms\Components\Section::make('Taarifa Kuu za Duka')
                 ->columns(1)
                 ->schema([
-                    TextInput::make('name')->label('Jina la Duka/Eneo la Wakala')->required()->columnSpanFull(),
+                    TextInput::make('name')->label('Jina la Duka/Eneo la Wakala')->columnSpanFull(),
                     TextInput::make('location')->label('Mahali Lilipo (Hiari)')->columnSpanFull(),
                     TextInput::make('initial_cash_on_hand')->label('Fedha Taslimu Mkononi ya Kuanzia Dukani (TZS)')->numeric()->prefix('Tsh')->default(0),
                     Toggle::make('is_active')->label('Duka Lipo Kazini?')->default(true)->columnSpanFull(),
@@ -148,7 +148,7 @@ class DukaResource extends Resource
                     ->getStateUsing(function (Shop $record) {
                         if (empty($record->mno_initial_allocations)) return 'Hakuna taarifa';
                         return collect($record->mno_initial_allocations)
-                            ->map(fn($alloc) => ucfirst($alloc['mno']) . ': ' . number_format($alloc['initial_float_allocated'] ?? 0) . ' TZS')
+                            ->map(fn($alloc) => ucfirst($alloc['mno_key']) . ': ' . number_format($alloc['initial_float_allocated'] ?? 0) . ' TZS')
                             ->implode(', ');
                     }),
                 TextColumn::make('assignedWakalas.name')

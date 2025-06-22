@@ -13,6 +13,7 @@ use Filament\Tables\Columns\TextColumn;
 use Illuminate\Support\HtmlString;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
+use App\Models\User;
 
 
 
@@ -131,7 +132,11 @@ class HalotelTransactionResource extends Resource
                       ->searchable()->preload(),
                   SelectFilter::make('user_id')
                       ->label('Chuja kwa Wakala Aliyeingiza')
-                      ->relationship('user', 'name')
+                      ->options(
+                                User::whereHas('roles', function ($query) {
+                                    $query->where('name', 'wakala');
+                                })->pluck('name', 'id')
+                            )
                       ->searchable()->preload(),
                   Tables\Filters\Filter::make('processed_at')
                       ->form([Forms\Components\DatePicker::make('tarehe_kuanzia')->label('Kuanzia Tarehe'), Forms\Components\DatePicker::make('tarehe_kumaliza')->label('Hadi Tarehe'), ])
@@ -141,7 +146,7 @@ class HalotelTransactionResource extends Resource
                               ->when($data['tarehe_kumaliza'], fn (Builder $query, $date): Builder => $query->whereDate('processed_at', '<=', $date));
                       }),
 
-                      
+
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
