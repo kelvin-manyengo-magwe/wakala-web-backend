@@ -18,6 +18,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Forms\Components\Toggle;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Section;
+use App\Models\BusinessInvestment;
+
+
 
 class DukaResource extends Resource
 {
@@ -45,6 +50,34 @@ class DukaResource extends Resource
                 ->columns(1)
                 ->schema([
                     TextInput::make('name')->label('Jina la Duka/Eneo la Wakala')->columnSpanFull(),
+
+
+                    Select::make('business_investment_id')
+                            ->label('Chanzo cha Uwekezaji wa Kuanzia') // "Source of Initial Investment"
+                            ->relationship('fundingInvestment', 'investment_date') // Uses the fundingInvestment() relationship from Shop model
+                            ->getOptionLabelFromRecordUsing(fn (BusinessInvestment $record) =>
+                                "Tarehe: " . $record->investment_date->format('d M Y') . " - Kiasi: Tsh " . number_format($record->initial_investment_amount,0)
+                            )
+                            ->searchable(['investment_date', 'initial_investment_amount']) // Search by these investment fields
+                            ->preload()
+                            ->required() // A shop should probably be linked to an investment source
+                            ->helperText('Chagua uwekezaji mkuu uliotumika kuanzisha duka hili.')
+                            ->columnSpanFull(),
+
+
+                    FileUpload::make('image_path') // Field name matches database column
+                            ->label('Picha ya Duka (Hiari)') // "Shop Image (Optional)"
+                            ->image() // Specify that it's an image for validation and preview
+                            ->disk('public') // Which filesystem disk to use (from config/filesystems.php)
+                            ->directory('shop-images') // Subdirectory within the public disk's root
+                            ->nullable()  // if the image is not must to be uploaded.
+                            ->visibility('public') // Make uploaded files publicly accessible
+                            ->imageEditor() // Optional: enable basic image editor
+                            ->imagePreviewHeight('200')
+                            ->maxSize(2048) // Max file size in KB (e.g., 2MB)
+                            ->helperText('Weka picha ya duka kwa utambulisho bora.')
+                            ->columnSpanFull(), // Take full width if in 2-column layout
+
                     TextInput::make('location')->label('Mahali Lilipo (Hiari)')->columnSpanFull(),
                     TextInput::make('initial_cash_on_hand')->label('Fedha Taslimu Mkononi ya Kuanzia Dukani (TZS)')->numeric()->prefix('Tsh')->default(0),
                     Toggle::make('is_active')->label('Duka Lipo Kazini?')->default(true)->columnSpanFull(),
@@ -146,6 +179,20 @@ class DukaResource extends Resource
             ->columns([
                 TextColumn::make('name')->label('Jina la Duka')->searchable()->sortable(),
                 TextColumn::make('location')->label('Mahali'),
+
+                Tables\Columns\ImageColumn::make('image_url') // Use the accessor
+                  ->label('Picha')
+                  ->disk('public') // Redundant if image_url is full URL, but good practice if it were just path
+                  ->circular() // Optional: display as circle
+                  ->width(50)->height(50),
+
+
+                  TextColumn::make('fundingInvestment.investment_date') // Display date of funding investment
+                      ->label('Uwekezaji Tarehe')
+                      ->date('d M Y')
+                      ->sortable(),
+
+
                 TextColumn::make('initial_cash_on_hand')->label('Taslimu ya Kuanzia')->money('TZS')->sortable()->badge()->color('success'),
                 TextColumn::make('mno_allocations_summary')
                     ->label('Float za MNO (Kuanzia)')

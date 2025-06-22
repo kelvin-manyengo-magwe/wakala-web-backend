@@ -21,6 +21,8 @@ class Shop extends Model
         'initial_cash_on_hand',
         'mno_initial_allocations',
         'is_active',
+        'image_path',
+        'business_investment_id'
     ];
 
     protected $casts = [
@@ -67,5 +69,22 @@ class Shop extends Model
         return $this->hasMany(Device::class, 'shop_id', 'id');
     }
 
+
+    // An accessor to get the full url of the image
+        public function getImageUrlAttribute(): ?string
+       {
+           if ($this->image_path) {
+               return Storage::disk('public')->url($this->image_path);
+           }
+           return null; // Or a placeholder image URL
+       }
+
+       /**
+     * The specific business investment that initially funded this shop.
+     */
+    public function fundingInvestment(): BelongsTo
+    {
+        return $this->belongsTo(BusinessInvestment::class, 'business_investment_id');
+    }
 
 }
