@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Storage;
 
 
 class Shop extends Model
@@ -54,13 +55,15 @@ class Shop extends Model
     }
 
     // You might add accessors to get specific MNO initial float or total initial float
-    public function getTotalInitialFloatAllocatedAttribute(): float
+    public function getTotalInitialFloatAttribute(): float
     {
-        if (empty($this->mno_initial_allocations))
-        {
-            return 0;
+        if (empty($this->mno_initial_allocations) || !is_array($this->mno_initial_allocations)) {
+            return 0.0;
         }
-        return collect($this->mno_initial_allocations)->sum('initial_float');
+        return (float) collect($this->mno_initial_allocations)->sum(function($allocation) {
+            // Uses 'initial_float' as the key *inside* the JSON array items
+            return (float) ($allocation['initial_float'] ?? 0);
+        });
     }
 
 

@@ -183,9 +183,11 @@ class DukaResource extends Resource
                 Tables\Columns\ImageColumn::make('image_url') // Use the accessor
                   ->label('Picha')
                   ->disk('public') // Redundant if image_url is full URL, but good practice if it were just path
-                  ->circular() // Optional: display as circle
-                  ->width(50)->height(50),
-
+                  ->width(80)
+                  ->height(60)
+                  ->extraImgAttributes([
+                      'class' => 'rounded-md border border-gray-300 shadow-sm',
+                            ]),
 
                   TextColumn::make('fundingInvestment.investment_date') // Display date of funding investment
                       ->label('Uwekezaji Tarehe')

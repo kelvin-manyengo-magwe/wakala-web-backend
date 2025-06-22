@@ -12,6 +12,7 @@ use App\Filament\Pages\RegistrationSuccess;
 use App\Filament\Widgets\AnalyticsDashboard;
 use App\Filament\Pages\CustomAdminLogin;
 use App\Filament\Pages\AdminSetupPage;
+use App\Filament\Pages\MadukaMiamalaPage;
 
 
 
@@ -44,7 +45,8 @@ class AdminPanelProvider extends PanelProvider
             ->pages([ // Standard pages for the panel
                 Pages\Dashboard::class,
                 RegistrationSuccess::class, // So getUrl() works for this success page
-                AdminSetupPage::class
+                AdminSetupPage::class,
+                MadukaMiamalaPage::class,
 
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')

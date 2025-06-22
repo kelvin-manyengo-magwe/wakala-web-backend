@@ -187,6 +187,9 @@ class UserResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                ->formatStateUsing(function ($state) {
+                      return '<span style="font-size: 1.25rem;">🧑‍💼</span> ' . e($state);
+                  })->html()
                     ->label('Jina Kamili')
                     ->searchable()
                     ->sortable(),

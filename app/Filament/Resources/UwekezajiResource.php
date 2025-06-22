@@ -26,6 +26,7 @@ use Filament\Forms\Components\Placeholder;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use App\Filament\Resources\DukaResource; // For linking
+use Illuminate\Support\Facades\Log;
 
 
 class UwekezajiResource extends Resource
@@ -40,177 +41,198 @@ class UwekezajiResource extends Resource
     public static function getPluralModelLabel(): string { return 'Rekodi za Uwekezaji'; } // "Investment Records"
     public static function getModelLabel(): string { return 'Uwekezaji'; } // "Investment"
 
+
     public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                TextInput::make('initial_investment_amount')
-                    ->label('Jumla ya Uwekezaji (TZS)')
-                    ->numeric()->required()->prefix('Tsh')->minValue(1)
-                    ->helperText('Kiasi chote cha pesa kilichowekwa kwa ajili ya biashara hii.'),
-                DatePicker::make('investment_date')
-                    ->label('Tarehe ya Uwekezaji')
-                    ->required()->default(now())->maxDate(now()),
-                Textarea::make('notes')->label('Maelezo ya Ziada (Hiari)')->columnSpanFull(),
+{
+    return $form
+        ->schema([
+            Forms\Components\Section::make('Taarifa za Msingi za Uwekezaji')
+                ->schema([
+                    TextInput::make('initial_investment_amount')->label('Jumla ya Uwekezaji (TZS)')->numeric()->required()->prefix('Tsh')->minValue(0.01)->helperText('Kiasi chote cha pesa kilichowekwa.'),
+                    DatePicker::make('investment_date')->label('Tarehe ya Uwekezaji')->required()->default(now())->maxDate(now()),
+                    Textarea::make('notes')->label('Maelezo ya Ziada (Hiari)')->columnSpanFull(),
+                ]),
 
-                // Read-only Placeholder section for Edit Form (shows sums from related shops)
-                Forms\Components\Section::make('Muhtasari wa Mgawanyo wa Uwekezaji Huu')
-                    ->description('Hii inaonyesha jinsi uwekezaji huu ulivyotumika kuanzisha maduka.')
-                    ->columns(2)
-                    ->visible(fn (string $operation) => $operation === 'edit')
-                    ->schema([
-                        Placeholder::make('total_cash_to_funded_shops')
-                            ->label('Jumla ya Taslimu Kwenye Maduka Yaliyofadhiliwa')
-                            ->content(function (?BusinessInvestment $record) {
-                                if (!$record) return 'Tsh 0.00';
-                                return 'Tsh ' . number_format($record->shopsFunded()->sum('initial_cash_on_hand'), 2);
+            Forms\Components\Section::make('Muhtasari wa Mgawanyo wa Uwekezaji Huu')
+                ->description('Hii huonyesha jinsi uwekezaji huu ulivyotumika kwa maduka yanayohusishwa nao. Husasishwa baada ya kuhifadhi.')
+                ->columns(2)
+                ->visible(fn (string $operation): bool => $operation === 'edit') // Show only on edit
+                ->schema([
+                    Placeholder::make('allocated_cash_summary')
+                        ->label('Jumla Taslimu kwa Maduka Husika')
+                        ->content(function (?BusinessInvestment $record): string {
+                            if (!$record || !$record->relationLoaded('shopsFunded')) {
+                                $record?->loadMissing('shopsFunded'); // Load if not already loaded
+                            }
+                            return 'Tsh ' . number_format($record?->shopsFunded->sum('initial_cash_on_hand') ?? 0, 2);
+                        }),
+                    Placeholder::make('allocated_float_summary')
+                        ->label('Jumla Float kwa Maduka Husika')
+                        ->content(function (?BusinessInvestment $record): string {
+                            if (!$record || !$record->relationLoaded('shopsFunded')) {
+                                $record?->loadMissing('shopsFunded');
+                            }
+                            $totalFloat = 0;
+                            if ($record && $record->shopsFunded) {
+                                foreach ($record->shopsFunded as $shop) {
+                                    $totalFloat += $shop->total_initial_float; // Uses accessor from Shop model
+                                }
+                            }
+                            return 'Tsh ' . number_format($totalFloat, 2);
+                        }),
+                    Placeholder::make('total_allocated_summary')
+                        ->label('Jumla Iliyogawiwa Kutoka Huu Uwekezaji')
+                        ->content(function (?BusinessInvestment $record): string {
+                            if (!$record || !$record->relationLoaded('shopsFunded')) {
+                                $record?->loadMissing('shopsFunded');
+                            }
+                            $cash = $record?->shopsFunded->sum('initial_cash_on_hand') ?? 0;
+                            $float = 0;
+                            if ($record && $record->shopsFunded) {
+                                foreach($record->shopsFunded as $shop) { $float += $shop->total_initial_float; }
+                            }
+                            return 'Tsh ' . number_format($cash + $float, 2);
+                        }),
+                    Placeholder::make('remaining_from_investment_summary')
+                        ->label('Salio la Uwekezaji Huu')
+                        ->content(function (?BusinessInvestment $record): string {
+                            if (!$record) return 'Tsh 0.00'; // No record, no calculation
+                            if (!$record->relationLoaded('shopsFunded')) {
+                                $record->loadMissing('shopsFunded');
+                            }
+                            $cash = $record->shopsFunded->sum('initial_cash_on_hand');
+                            $float = 0;
+                            foreach($record->shopsFunded as $shop) { $float += $shop->total_initial_float; }
+                            $allocated = $cash + $float;
+                            return 'Tsh ' . number_format($record->initial_investment_amount - $allocated, 2);
+                        }),
+                ]),
+        ]);
+}
+
+public static function table(Table $table): Table
+{
+    return $table
+        ->query(BusinessInvestment::query()->with('shopsFunded')) // Eager load shopsFunded
+        ->columns([
+            TextColumn::make('investment_date')->label('Tarehe')->date('d M Y')->sortable()->searchable(),
+            TextColumn::make('initial_investment_amount')->label('Kiasi cha Uwekezaji')->money('TZS')->sortable()->badge()->color('success'),
+            TextColumn::make('shops_funded_count')->counts('shopsFunded')->label('Maduka Yaliyofadhiliwa')->badge()->color('primary'),
+            TextColumn::make('total_cash_to_shops')
+                ->label('Taslimu Madukani Jumla')
+                ->money('TZS')->badge()->color('info')
+                ->state(function (BusinessInvestment $record): float {
+                    return (float) $record->shopsFunded->sum('initial_cash_on_hand');
+                })->sortable(false), // Disable sort on calculated sum for now
+            TextColumn::make('total_float_to_shops')
+                ->label('Float Madukani Jumla')
+                ->money('TZS')->badge()->color('warning')
+                ->state(function (BusinessInvestment $record): float {
+                    $totalFloat = 0;
+                    foreach ($record->shopsFunded as $shop) {
+                        // Ensure using the accessor name: total_initial_float
+                        $totalFloat += $shop->total_initial_float;
+                    }
+                    return $totalFloat;
+                })->sortable(false), // Disable sort
+            TextColumn::make('notes')->label('Maelezo')->words(8)->toggleable(isToggledHiddenByDefault:true)->searchable(),
+        ])
+        ->filters([ /* ... */ ])
+        ->actions([ Tables\Actions\ViewAction::make()->label('Angalia'), Tables\Actions\EditAction::make()->label('Hariri'), ])
+        ->bulkActions([ /* ... */ ]);
+}
+
+public static function infolist(Infolist $infolist): Infolist
+{
+    // Reusing $mnoOptions definition logic from DukaResource if available or define here.
+    $mnoDisplayOptions = ['airtel' => 'Airtel Money', 'halotel' => 'Halopesa', 'tigo' => 'Tigo Pesa', 'mpesa' => 'M-Pesa (Vodacom)'];
+
+    return $infolist
+        ->columns(1)
+        ->schema([
+            InfolistSection::make('Taarifa za Msingi za Uwekezaji')
+                ->columns(2)
+                ->schema([
+                    TextEntry::make('initial_investment_amount')->label('Kiasi Kilichowekwa')->money('TZS')->size(TextEntry\TextEntrySize::Large),
+                    TextEntry::make('investment_date')->label('Tarehe ya Uwekezaji')->date('d F Y'),
+                    TextEntry::make('notes')->label('Maelezo ya Ziada')->columnSpanFull()->placeholder('Hakuna maelezo.'),
+                ]),
+
+            InfolistSection::make('Maduka Yaliyofadhiliwa na Uwekezaji Huu')
+                ->collapsible()
+                ->schema([
+                    RepeatableEntry::make('shopsFunded') // Uses shopsFunded() HasMany relationship
+                        ->label('')
+                        ->grid(2) // 2 Shops per row in the infolist display
+                        ->schema([
+                            // Schema for each Shop entry
+                            InfolistGrid::make(1) // Each shop details in a single column grid
+                                ->extraAttributes(['class' => 'p-4 my-2 border dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 space-y-2'])
+                                ->schema([
+                                    ImageEntry::make('image_url') // Uses $shop->image_url accessor
+                                        ->label('') ->height(120)->defaultImageUrl(asset('images/placeholder_shop.png')),
+                                    TextEntry::make('name')->label('Jina la Duka')->weight('bold')
+                                        ->url(fn (Shop $record): string => DukaResource::getUrl('edit', ['record' => $record])),
+                                    TextEntry::make('location')->label('Mahali')->icon('heroicon-s-map-pin'),
+                                    TextEntry::make('initial_cash_on_hand')->label('Taslimu ya Kuanzia')->money('TZS')->badge()->color('sky'),
+                                    // Displaying MNO allocations correctly
+                                    KeyValueEntry::make('mno_initial_allocations') // Shop model's JSON attribute
+                                        ->label('Float za MNO za Kuanzia')
+                                        ->state(function(Shop $record) use ($mnoDisplayOptions) { // $record is a Shop here
+                                            return collect($record->mno_initial_allocations ?? [])
+                                                ->mapWithKeys(function($alloc) use ($mnoDisplayOptions) {
+                                                    // Key inside JSON is 'mno_key', value is 'initial_float'
+                                                    $mnoName = $mnoDisplayOptions[$alloc['mno_key']] ?? ucfirst($alloc['mno_key'] ?? 'MNO');
+                                                    return [$mnoName => number_format($alloc['initial_float'] ?? 0) . ' TZS'];
+                                                })->all();
+                                        }),
+                                    TextEntry::make('total_initial_float') // Using the Shop accessor directly
+                                        ->label('Jumla ya Float Kuanzia (Dukani)')
+                                        ->money('TZS')->badge()->color('success'),
+                                    TextEntry::make('assignedWakalas.name')->label('Mawakala wa Duka')->badge()->separator(', ')->placeholder('--'),
+                                ]),
+                        ]),
+
+                    // Overall Summary for THIS investment's funded shops
+                    InfolistGrid::make(2)->schema([
+                        TextEntry::make('calculated_total_cash_from_investment')
+                            ->label('Jumla ya Taslimu Iliyogawiwa na Uwekezaji Huu')
+                            ->money('TZS')
+                            ->state(function(BusinessInvestment $record){
+                                return $record->shopsFunded->sum('initial_cash_on_hand');
                             }),
-                        Placeholder::make('total_float_to_funded_shops')
-                            ->label('Jumla ya Float Kwenye Maduka Yaliyofadhiliwa')
-                            ->content(function (?BusinessInvestment $record) {
-                                if (!$record) return 'Tsh 0.00';
+                        TextEntry::make('calculated_total_float_from_investment')
+                            ->label('Jumla ya Float Iliyogawiwa na Uwekezaji Huu')
+                            ->money('TZS')
+                            ->state(function(BusinessInvestment $record){
                                 $totalFloat = 0;
-                                $record->shopsFunded()->each(function (Shop $shop) use (&$totalFloat) {
-                                    $totalFloat += $shop->total_initial_float; // Uses accessor
-                                });
-                                return 'Tsh ' . number_format($totalFloat, 2);
+                                foreach($record->shopsFunded as $shop){
+                                    $totalFloat += $shop->total_initial_float; // Use accessor
+                                }
+                                return $totalFloat;
                             }),
-                        Placeholder::make('total_allocated_from_this_investment')
-                            ->label('Jumla Iliyogawiwa Kutoka Uwekezaji Huu')
-                            ->content(function (?BusinessInvestment $record) {
-                                if (!$record) return 'Tsh 0.00';
-                                $cash = $record->shopsFunded()->sum('initial_cash_on_hand');
-                                $float = 0;
-                                $record->shopsFunded()->each(function (Shop $shop) use (&$float) {
-                                    $float += $shop->total_initial_float;
-                                });
-                                return 'Tsh ' . number_format($cash + $float, 2);
+                        TextEntry::make('calculated_overall_allocated')
+                            ->label('Jumla Kuu Iliyogawiwa na Uwekezaji Huu')
+                            ->money('TZS')
+                            ->state(function(BusinessInvestment $record){
+                                  $totalCash = $record->shopsFunded->sum('initial_cash_on_hand');
+                                  $totalFloat = 0;
+                                   foreach($record->shopsFunded as $shop){ $totalFloat += $shop->total_initial_float; }
+                                  return $totalCash + $totalFloat;
+                              }),
+                        TextEntry::make('calculated_remaining_from_investment')
+                            ->label('Salio la Uwekezaji Huu')
+                            ->money('TZS')->color('warning')
+                            ->state(function(BusinessInvestment $record){
+                                $totalCash = $record->shopsFunded->sum('initial_cash_on_hand');
+                                $totalFloat = 0;
+                                 foreach($record->shopsFunded as $shop){ $totalFloat += $shop->total_initial_float; }
+                                return $record->initial_investment_amount - ($totalCash + $totalFloat);
                             }),
-                        Placeholder::make('remaining_from_this_investment_direct')
-                            ->label('Salio la Uwekezaji Huu (Baada ya Mgawanyo)')
-                            ->content(function (?BusinessInvestment $record) {
-                                if (!$record) return 'Tsh 0.00';
-                                $cash = $record->shopsFunded()->sum('initial_cash_on_hand');
-                                $float = 0;
-                                $record->shopsFunded()->each(function (Shop $shop) use (&$float) {
-                                    $float += $shop->total_initial_float;
-                                });
-                                return 'Tsh ' . number_format($record->initial_investment_amount - ($cash + $float), 2);
-                            }),
-                    ]),
-            ]);
-    }
-
-    public static function table(Table $table): Table
-    {
-        return $table
-            ->columns([
-                TextColumn::make('investment_date')->label('Tarehe')->date('d M Y')->sortable()->searchable(),
-                TextColumn::make('initial_investment_amount')->label('Kiasi cha Uwekezaji')->money('TZS')->sortable()->badge()->color('success'),
-                // Sum of cash allocated to shops FROM THIS INVESTMENT
-                TextColumn::make('shops_funded_sum_initial_cash_on_hand')
-                    ->sum('shopsFunded', 'initial_cash_on_hand') // Uses relationship for sum
-                    ->label('Taslimu Madukani')->money('TZS')->badge()->color('info'),
-                // Custom sum for initial float
-                TextColumn::make('shops_funded_sum_initial_float')
-                    ->label('Float Madukani')
-                    ->money('TZS')
-                    ->state(function (BusinessInvestment $record): float {
-                        $totalFloat = 0;
-                        foreach ($record->shopsFunded as $shop) { // Eager load shopsFunded if possible via query
-                            $totalFloat += $shop->total_initial_float;
-                        }
-                        return $totalFloat;
-                    })->badge()->color('warning'),
-                TextColumn::make('notes')->label('Maelezo')->words(8)->toggleable(isToggledHiddenByDefault: true),
-            ])
-            ->filters([ /* ... */ ])
-            ->actions([ Tables\Actions\ViewAction::make()->label('Angalia'), Tables\Actions\EditAction::make(), Tables\Actions\DeleteAction::make(), ])
-            ->bulkActions([ Tables\Actions\BulkActionGroup::make([ Tables\Actions\DeleteBulkAction::make(), ]), ]);
-    }
-
-    public static function infolist(Infolist $infolist): Infolist
-    {
-        return $infolist
-            ->columns(1)
-            ->schema([
-                InfolistSection::make('Taarifa za Msingi za Uwekezaji')
-                    ->columns(2)
-                    ->schema([
-                        TextEntry::make('initial_investment_amount')->label('Kiasi Kilichowekwa')->money('TZS')->size(TextEntry\TextEntrySize::Large),
-                        TextEntry::make('investment_date')->label('Tarehe ya Uwekezaji')->date('d F Y'),
-                        TextEntry::make('notes')->label('Maelezo ya Ziada')->columnSpanFull()->placeholder('Hakuna maelezo.'),
-                    ]),
-
-                InfolistSection::make('Maduka Yaliyofadhiliwa na Uwekezaji Huu')
-                    ->collapsible()
-                    ->schema([
-                        RepeatableEntry::make('shopsFunded') // NAME OF THE RELATIONSHIP
-                            ->label('')
-                            // getStateUsing is not needed if 'shopsFunded' is a direct relationship.
-                            // Filament's RepeatableEntry will iterate over $record->shopsFunded automatically.
-                            ->grid(2)
-                            ->schema([
-                                InfolistGrid::make(1)
-                                    ->extraAttributes(['class' => 'p-4 border dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 space-y-3 mb-4'])
-                                    ->schema([
-                                        ImageEntry::make('image_url') // From Shop model accessor, called on each shop in the relation
-                                            ->label('') ->height(120)->width('100%')
-                                            ->extraAttributes(['class' => 'object-cover rounded-md mb-2 bg-gray-50 dark:bg-gray-700'])
-                                            ->defaultImageUrl(asset('images/placeholder_shop.png')),
-                                        TextEntry::make('name')->label('Jina la Duka')->weight('bold')->size(TextEntry\TextEntrySize::Medium)
-                                            ->url(fn (Shop $record): string => DukaResource::getUrl('edit', ['record' => $record])), // Link to edit Shop
-                                        TextEntry::make('location')->label('Mahali'),
-                                        TextEntry::make('initial_cash_on_hand')->label('Taslimu ya Kuanzia')->money('TZS')->badge()->color('sky'),
-                                        // Display MNO allocations from the JSON field of the Shop model
-                                        KeyValueEntry::make('mno_initial_allocations') // THIS IS THE JSON FIELD NAME
-                                            ->label('Float za MNO (Kuanzia)')
-                                            // ->valueAsArray() // Sometimes needed for KeyValue on JSON
-                                            ->state(function(Shop $record) { // $record here is the Shop instance from the shopsFunded relation
-                                                return collect($record->mno_initial_allocations ?? [])
-                                                    ->mapWithKeys(fn($alloc) => [
-                                                        ucfirst($alloc['mno_key'] ?? 'MNO') => number_format($alloc['initial_float'] ?? 0) . ' TZS'
-                                                    ])->all();
-                                            }),
-                                        TextEntry::make('assignedWakalas.name') // Names of Wakalas assigned to this Shop
-                                            ->label('Mawakala wa Duka Hili')
-                                            ->badge()->separator(', ')
-                                            ->placeholder('Hakuna wakala.'),
-                                    ]),
-                            ]),
-
-                        // Summary for THIS investment
-                        InfolistGrid::make(2)->schema([
-                            TextEntry::make('total_allocated_from_this_investment_calc')
-                                ->label('Jumla Iliyogawiwa na Uwekezaji Huu')
-                                ->money('TZS')
-                                ->state(function(BusinessInvestment $record){
-                                    $total = 0;
-                                    foreach($record->shopsFunded as $shop){ // shopsFunded IS THE RELATIONSHIP
-                                        $total += $shop->initial_cash_on_hand;
-                                        foreach($shop->mno_initial_allocations ?? [] as $alloc) {
-                                            $total += (float) ($alloc['initial_float'] ?? 0);
-                                        }
-                                    }
-                                    return $total;
-                                }),
-                            TextEntry::make('remaining_from_this_investment_calc')
-                                ->label('Salio Baki la Uwekezaji Huu')
-                                ->money('TZS')->color('warning')
-                                ->state(function(BusinessInvestment $record){
-                                    $totalAllocated = 0;
-                                     foreach($record->shopsFunded as $shop){
-                                        $totalAllocated += $shop->initial_cash_on_hand;
-                                        foreach($shop->mno_initial_allocations ?? [] as $alloc) {
-                                            $totalAllocated += (float) ($alloc['initial_float'] ?? 0);
-                                        }
-                                    }
-                                    return $record->initial_investment_amount - $totalAllocated;
-                                }),
-                        ])->columnSpanFull()->extraAttributes(['class' => 'mt-4 p-4 border-t dark:border-gray-700']),
-                    ]),
-            ]);
-    }
+                    ])->columnSpanFull()->extraAttributes(['class' => 'mt-6 pt-4 border-t dark:border-gray-700']),
+                ]),
+        ]);
+}
 
     public static function getPages(): array
     {
