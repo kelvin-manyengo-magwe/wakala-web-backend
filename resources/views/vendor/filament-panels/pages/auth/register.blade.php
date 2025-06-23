@@ -178,10 +178,7 @@
 
         <div class="heading-area">
             {{-- $this->getTitle() comes from your AdminRegistration.php Page class --}}
-            <h1>{{ $this->getTitle() }}</h1>
-            <p class="subheading-text">
-                Jaza fomu kwa umakini ili ufungue akaunti yako ya Usimamizi.
-            </p>
+
         </div>
 
         {{-- Filament Form rendering --}}
@@ -197,7 +194,7 @@
 
         {{-- Link back to Login page --}}
         <div class="login-link-container">
-            <span>Tayari una akaunti?</span>
+            <span>Tayari una akaunti? </span>
             <a href="{{ filament()->getLoginUrl() }}"
                class="ml-1 hover:underline">
                 Ingia Sasa Hapa.

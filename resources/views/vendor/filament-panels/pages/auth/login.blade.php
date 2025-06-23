@@ -147,9 +147,9 @@
         </x-filament-panels::form>
 
         <div class="login-link-container">
-            <span>Tayari una akaunti?</span>
-            <a href="{{ filament()->getLoginUrl() }}" class="ml-1 hover:underline">
-                Ingia Sasa Hapa.
+            <span>Huna akaunti ?</span>
+            <a href="{{ route('custom.public.admin.register') }}" class="ml-1 hover:underline">
+                Jisajili Hapa.
             </a>
         </div>
     </div> {{-- End of .registration-form-card --}}

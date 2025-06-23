@@ -8,6 +8,9 @@ use App\Filament\Resources\UserResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 
+use Filament\Notifications\Notification;
+
+
 class CreateUser extends CreateRecord
 {
     protected static string $resource = UserResource::class;
@@ -56,4 +59,36 @@ class CreateUser extends CreateRecord
             ]);
         }
     }
+
+
+
+          protected function getCreatedNotificationTitle(): ?string // Custom success notification title
+            {
+                return 'Wakala Ametengenezwa Kikamilifu!';
+            }
+
+        protected function getCreatedNotification(): ?Notification // Full custom notification
+            {
+                return Notification::make()
+                    ->success()
+                    ->title('Wakala Ametengenezwa!')
+                    ->body('Mtumiaji mpya wa wakala ameongezwa kwenye mfumo.')
+                    ->icon('heroicon-o-check-circle'); // Or a party popper if available as icon
+            }
+
+        // Redirect URL after creation
+        protected function getRedirectUrl(): string
+            {
+                // Optionally redirect to a specific page or just the resource index
+                // For now, let's stay on a page that can show confetti
+                // We will add a session flash and check for it on ListUsers or ViewUser
+                // If CreateRecord directly supports events we can dispatch from here
+                // return $this->getResource()::getUrl('index');
+
+                // Store a session flash for the confetti
+                session()->flash('user_created_confetti', true);
+                session()->flash('new_user_name', $this->record?->name ?? 'Wakala'); // $this->record is the created User
+
+                return $this->getResource()::getUrl('view', ['record' => $this->record]); // Redirect to view the new user
+            }
 }

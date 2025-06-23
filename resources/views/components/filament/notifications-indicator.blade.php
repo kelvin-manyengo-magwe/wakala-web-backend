@@ -45,7 +45,7 @@
             {{-- @php
                 // $notificationsUrl = \App\Filament\Pages\YourNotificationsPage::getUrl();
             @endphp
-            @if(isset($notificationsUrl))
+            @if(isset($notificationsUrl))=
             <a href="{{ $notificationsUrl }}" class="text-sm font-medium text-primary-600 hover:underline dark:text-primary-400">
                 Ona Zote
             </a>

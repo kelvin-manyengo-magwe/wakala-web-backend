@@ -263,7 +263,7 @@ class UserResource extends Resource
             'index' => Pages\ListUsers::route('/'),
             'create' => Pages\CreateUser::route('/create'), // Ensure create page exists and path is right
             'edit' => Pages\EditUser::route('/{record}/edit'),
-          //  'view' => Pages\ViewUser::route('/{record}'),     // Ensure view page exists
+            'view' => Pages\ViewUser::route('/{record}'),     // Ensure view page exists
         ];
     }
 }
