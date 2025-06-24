@@ -173,17 +173,22 @@ public static function infolist(Infolist $infolist): Infolist
                                     TextEntry::make('name')->label('Jina la Duka')->weight('bold')
                                         ->url(fn (Shop $record): string => DukaResource::getUrl('edit', ['record' => $record])),
                                     TextEntry::make('location')->label('Mahali')->icon('heroicon-s-map-pin'),
-                                    TextEntry::make('initial_cash_on_hand')->label('Taslimu ya Kuanzia')->money('TZS')->badge()->color('sky'),
+                                    TextEntry::make('initial_cash_on_hand')->label('Taslimu ya Kuanzia')->money('TZS')->badge()->color('info'),
                                     // Displaying MNO allocations correctly
                                     KeyValueEntry::make('mno_initial_allocations') // Shop model's JSON attribute
-                                        ->label('Float za MNO za Kuanzia')
+                                        ->label('Floti ya Kuanzia kwa Mitandao')
                                         ->state(function(Shop $record) use ($mnoDisplayOptions) { // $record is a Shop here
-                                            return collect($record->mno_initial_allocations ?? [])
-                                                ->mapWithKeys(function($alloc) use ($mnoDisplayOptions) {
-                                                    // Key inside JSON is 'mno_key', value is 'initial_float'
-                                                    $mnoName = $mnoDisplayOptions[$alloc['mno_key']] ?? ucfirst($alloc['mno_key'] ?? 'MNO');
-                                                    return [$mnoName => number_format($alloc['initial_float'] ?? 0) . ' TZS'];
-                                                })->all();
+                                          if (empty($record->mno_initial_allocations)) {
+                                                  return ['-' => 'Hakuna taarifa'];
+                                              }
+                                              return collect($record->mno_initial_allocations)
+                                                  ->mapWithKeys(function($alloc) use ($mnoDisplayOptions) {
+                                                      $mnoName = $mnoDisplayOptions[$alloc['mno_key']] ?? ucfirst($alloc['mno_key'] ?? 'MNO');
+                                                      // ##### THIS IS THE FIX #####
+                                                      // CORRECTED: The key must be 'initial_float_allocated' to match what's saved in the database.
+                                                      $floatValue = $alloc['initial_float_allocated'] ?? 0;
+                                                      return [$mnoName => number_format($floatValue) . ' TZS'];
+                                                  })->all();
                                         }),
                                     TextEntry::make('total_initial_float') // Using the Shop accessor directly
                                         ->label('Jumla ya Float Kuanzia (Dukani)')
@@ -201,7 +206,7 @@ public static function infolist(Infolist $infolist): Infolist
                                 return $record->shopsFunded->sum('initial_cash_on_hand');
                             }),
                         TextEntry::make('calculated_total_float_from_investment')
-                            ->label('Jumla ya Float Iliyogawiwa na Uwekezaji Huu')
+                            ->label('Jumla ya Floti Iliyogawiwa na Uwekezaji Huu')
                             ->money('TZS')
                             ->state(function(BusinessInvestment $record){
                                 $totalFloat = 0;
