@@ -56,15 +56,18 @@ class Shop extends Model
 
     // You might add accessors to get specific MNO initial float or total initial float
     public function getTotalInitialFloatAttribute(): float
-    {
-        if (empty($this->mno_initial_allocations) || !is_array($this->mno_initial_allocations)) {
-            return 0.0;
-        }
-        return (float) collect($this->mno_initial_allocations)->sum(function($allocation) {
-            // Uses 'initial_float' as the key *inside* the JSON array items
-            return (float) ($allocation['initial_float'] ?? 0);
-        });
-    }
+   {
+       if (empty($this->mno_initial_allocations) || !is_array($this->mno_initial_allocations)) {
+           return 0.0;
+       }
+
+       // CORRECTED: Changed key from 'initial_float' to 'initial_float_allocated'
+       // to match the key used in the DukaResource form repeater.
+       return (float) collect($this->mno_initial_allocations)->sum(function($allocation) {
+           return (float) ($allocation['initial_float_allocated'] ?? 0);
+       });
+   }
+
 
 
     public function devices(): HasMany

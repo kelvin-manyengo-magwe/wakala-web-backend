@@ -124,17 +124,16 @@ public static function table(Table $table): Table
                 ->state(function (BusinessInvestment $record): float {
                     return (float) $record->shopsFunded->sum('initial_cash_on_hand');
                 })->sortable(false), // Disable sort on calculated sum for now
-            TextColumn::make('total_float_to_shops')
-                ->label('Float Madukani Jumla')
-                ->money('TZS')->badge()->color('warning')
-                ->state(function (BusinessInvestment $record): float {
-                    $totalFloat = 0;
-                    foreach ($record->shopsFunded as $shop) {
-                        // Ensure using the accessor name: total_initial_float
-                        $totalFloat += $shop->total_initial_float;
-                    }
-                    return $totalFloat;
-                })->sortable(false), // Disable sort
+
+                TextColumn::make('total_float_to_shops')
+                        ->label('Jumla ya Floti Madukani')
+                        ->money('TZS')->badge()->color('warning')
+                        ->state(function (BusinessInvestment $record): float {
+                            // IMPROVED & FIXED: This now works because the accessor in Shop.php is correct.
+                            // We use the more concise sum() method on the collection.
+                            return $record->shopsFunded->sum('total_initial_float');
+                })->sortable(false), // Disabling sort
+
             TextColumn::make('notes')->label('Maelezo')->words(8)->toggleable(isToggledHiddenByDefault:true)->searchable(),
         ])
         ->filters([ /* ... */ ])
