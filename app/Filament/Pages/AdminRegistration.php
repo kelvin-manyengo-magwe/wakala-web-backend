@@ -14,8 +14,11 @@ use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 use App\Services\SmsService; // Your SMS Service
 use Filament\Actions\Action;
-// Ensure RegistrationSuccess page exists and its route is correctly defined
-// We will use its route name for redirection.
+use App\Notifications\NewAdminCreatedNotification;
+use Illuminate\Support\Facades\Notification as NotificationFacade; //using it with nickname
+
+
+
 
 class AdminRegistration extends Page implements HasForms
 {
@@ -123,22 +126,16 @@ class AdminRegistration extends Page implements HasForms
             Log::info("Msimamizi mpya (admin) amesajiliwa: {$user->name}, {$user->email}, Simu: {$user->phone_no}");
 
 
-            // Notify all OTHER admins about this new registration
+                      // Notify all OTHER admins about this new registration
                       $otherAdmins = User::whereHas('roles', fn ($q) => $q->where('name', 'admin'))
-                                       ->where('id', '!=', $user->id) // Exclude the new admin themselves
-                                       ->get();
+                   ->where('id', '!=', $user->id)
+                   ->get();
 
+
+                    // Send our new notification class to them.
                     if ($otherAdmins->isNotEmpty()) {
-                         $notification = Notification::make()
-                             ->title('Msimamizi Mpya Amejiunga!')
-                             ->body("{$user->name} amekamilisha usajili wa akaunti ya msimamizi.")
-                             ->icon('heroicon-o-user-plus')
-                             ->info();
-
-                             foreach ($otherAdmins as $admin) {
-                                 $notification->sendToDatabase($admin);
-                     }
-                 }
+                    NotificationFacade::send($otherAdmins, new NewAdminCreatedNotification($user));
+                    }
 
             // Attempt to send the welcome SMS
             try {

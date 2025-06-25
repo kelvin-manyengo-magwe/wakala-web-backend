@@ -18,7 +18,7 @@
     $currentLogoPath = $darkMode ? $logoDarkModePath : $logoLightModePath;
 
     // The brand name text.
-    $brandName = 'Wakala';
+    $brandName = 'WakalaTel';
 @endphp
 
 {{--
@@ -59,7 +59,7 @@
         - `text-gray-950 dark:text-white`: Sets the text color for light mode (dark gray)
           and dark mode (white) to match Filament's typical theming.
     --}}
-      
+
             <span class="text-xl font-bold tracking-tight text-gray-950 dark:text-white">
                 {{ $brandName }}
             </span>

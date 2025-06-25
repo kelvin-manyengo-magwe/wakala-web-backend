@@ -163,7 +163,7 @@
 
 
 
-        <div class="logo-area">
+        <div class="logo-area text-center">
             <a href="{{ url('/') }}"> {{-- Link to homepage --}}
                 {{-- This assumes your AdminPanelProvider has ->brandLogo() correctly defined --}}
                 @if($currentPanelForView && method_exists($currentPanelForView, 'getBrandLogoHtml') && ($brandLogoHtmlView = $currentPanelForView->getBrandLogoHtml()))

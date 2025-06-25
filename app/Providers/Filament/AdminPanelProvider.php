@@ -8,6 +8,9 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Illuminate\View\View;
+use App\Filament\Pages\RegistrationSuccess;
+use App\Filament\Pages\AdminSetupPage;
+use App\Filament\Pages\MadukaMiamalaPage;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -27,6 +30,12 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(fn () => view('components.filament.brand.wakala-brand'))
             ->brandLogoHeight('4rem')
 
+            ->pages([
+                \Filament\Pages\Dashboard::class,
+                RegistrationSuccess::class,
+                AdminSetupPage::class,
+                MadukaMiamalaPage::class,
+            ])
             // The correct constant for the hook name
             ->renderHook(
                 'panels::global-search.after',
@@ -36,7 +45,9 @@ class AdminPanelProvider extends PanelProvider
             // Other panel configurations...
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            //->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
+
                 \App\Filament\Widgets\AnalyticsDashboard::class,
             ])
             ->middleware([
