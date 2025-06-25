@@ -5,6 +5,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Api\MobileAuthController;
+use App\Http\Controllers\Api\NotificationController;
+
+
 
 
 Route::post('/mobile/login', [MobileAuthController::class, 'login']);

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource;
 use App\Models\User;
 use App\Notifications\NewWakalaCreatedNotification;
+use App\Notifications\WakalaWelcomeNotification;
 use App\Services\SmsService;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Log;
@@ -38,6 +39,10 @@ class CreateUser extends CreateRecord
         if ($admins->isNotEmpty()) {
             NotificationFacade::send($admins, new NewWakalaCreatedNotification($createdWakala));
         }
+
+
+              // Sending the new "Welcome" notification directly TO the new wakala
+            $createdWakala->notify(new WakalaWelcomeNotification());
     }
 
     protected function getCreatedNotificationTitle(): ?string
