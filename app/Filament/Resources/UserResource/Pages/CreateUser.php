@@ -6,6 +6,7 @@ use App\Services\SmsService;
 use Illuminate\Support\Facades\Log;
 use App\Filament\Resources\UserResource;
 use Filament\Actions;
+use App\Models\User;
 use Filament\Resources\Pages\CreateRecord;
 
 use Filament\Notifications\Notification;
@@ -15,48 +16,39 @@ class CreateUser extends CreateRecord
 {
     protected static string $resource = UserResource::class;
 
-    protected function afterCreate(): void
     {
-        $user = $this->record;
+        $createdWakala = $this->record;
 
-        Log::debug("afterCreate hook triggered");
-
+        // Part 1: Your existing SMS logic (which is great)
         $password = $this->data['password'];
-        $phoneNumber = $user->phone_no;
-        $name = $user->name;
-
-        $tillNumbers = collect($user->till_no ?? [])->map(function ($entry) {
+        $tillNumbers = collect($createdWakala->till_no ?? [])->map(function ($entry) {
                 return "{$entry['mno_key']}: {$entry['till_no']}";
-              })->implode(', ');
-
-
-        Log::debug("Preparing to send SMS", [
-            'phone' => $phoneNumber,
-            'name' => $name,
-        ]);
+        })->implode(', ');
 
         try {
             $smsService = new SmsService();
-            $message = "Habari {$name}, umefanikiwa kusajiliwa kama wakala kwenye mfumo wa WakalaTel. Namba zako za Till ni : {$tillNumbers} ."
-                     . "Tumia neno la siri lifuatalo kuingia: {$password}. "
-                     . "Tafadhali hifadhi salama. Karibu!";
-
-            $result = $smsService->sendSms($phoneNumber, $message);
-
-            Log::debug("SMS service response", ['result' => $result]);
-
-            if (!$result) {
-                throw new \Exception('SMS service returned failure status');
-            }
-
-            Log::info("SMS sent successfully to {$phoneNumber}");
-
+            $message = "Habari {$createdWakala->name}, umesajiliwa kama wakala kwenye mfumo wa WakalaTel. Namba zako za Till ni: {$tillNumbers}. "
+                     . "Tumia neno la siri lifuatalo kuingia: {$password} ."
+                      . "Tafadhali Hifadhi salama. Karibu!";
+            $smsService->sendSms($createdWakala->phone_no, $message);
         } catch (\Exception $e) {
-            Log::error("SMS sending failed", [
-                'phone' => $phoneNumber,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            Log::error("SMS sending failed for new wakala {$createdWakala->phone_no}", ['error' => $e->getMessage()]);
+        }
+
+        // ##### THIS IS THE NEW PART FOR DATABASE NOTIFICATIONS #####
+        // 1. Find all admin users who should receive the notification.
+        $admins = User::whereHas('roles', fn ($query) => $query->where('name', 'admin'))->get();
+
+        // 2. Create the notification content.
+        $notification = Notification::make()
+            ->title('Wakala Mpya Amesajiliwa!')
+            ->body("Wakala '{$createdWakala->name}' ameongezwa kwenye mfumo.")
+            ->icon('heroicon-o-user-group')
+            ->success();
+
+        // 3. Send it to all admins' databases.
+        foreach ($admins as $admin) {
+            $notification->sendToDatabase($admin);
         }
     }
 
