@@ -23,4 +23,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/transactions', [TransactionController::class, 'index']);
 
 
+      //notifications routes on the mobile
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead']);
+
+        Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
 });
