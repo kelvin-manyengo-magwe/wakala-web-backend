@@ -101,22 +101,21 @@ class DukaResource extends Resource
                         ])->columnSpanFull(),
                 ]),
 
-            Forms\Components\Section::make('Wakala Watakaohudumu Dukani')
+                Forms\Components\Section::make('Wakala Watakaohudumu Dukani')
                 ->schema([
-                    // Field for CREATE page
-                    Select::make('assignedWakalas_create_ids') // Distinct name for create
+                    Select::make('assignedWakalas') // The name must match the relationship in the Shop model
                         ->label('Chagua Wakala (au Wakala Wengi)')
-                        ->options(
-                            User::whereHas('roles', fn (Builder $q) => $q->where('name', 'wakala'))
-                                ->pluck('name', 'id') // Or use getOptionLabelFromRecordUsing if you need User objects
-                                ->all()
-                        )
-                        // ->getOptionLabelFromRecordUsing(fn (User $record) => "{$record->name} ({$record->email})") // Use if options returns User objects
-                        ->multiple()
-                        ->searchable()
-                        ->preload(false) // Generally no preload needed if options are few or you want lazy load
-                        ->helperText('Chagua watumiaji wenye jukumu la "wakala".')
-                        ->columnSpanFull()
+                        ->relationship(
+                            name: 'assignedWakalas',
+                            titleAttribute: 'name',
+                            modifyQueryUsing: fn (Builder $query) => $query->whereHas('roles', fn (Builder $q) => $q->where('name', 'wakala'))
+                )
+                ->getOptionLabelFromRecordUsing(fn (User $record) => "{$record->name} ({$record->email})")
+                ->multiple()
+                ->preload()
+                ->searchable()
+                ->helperText('Chagua watumiaji wenye jukumu la "wakala".')
+                ->columnSpanFull()
                         ->visible(fn (string $operation) => $operation === 'create'), // ONLY on create
 
                     // Field for EDIT page

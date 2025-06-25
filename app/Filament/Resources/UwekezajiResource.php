@@ -42,6 +42,13 @@ class UwekezajiResource extends Resource
     public static function getModelLabel(): string { return 'Uwekezaji'; } // "Investment"
 
 
+    public static function getEloquentQuery(): Builder {
+          return parent::getEloquentQuery()
+              ->with(['shopsFunded.assignedWakalas']);
+        }
+
+
+
     public static function form(Form $form): Form
 {
     return $form
@@ -94,7 +101,7 @@ class UwekezajiResource extends Resource
                             return 'Tsh ' . number_format($cash + $float, 2);
                         }),
                     Placeholder::make('remaining_from_investment_summary')
-                        ->label('Salio la Uwekezaji Huu')
+                        ->label('Salio Baki la Uwekezaji Huu')
                         ->content(function (?BusinessInvestment $record): string {
                             if (!$record) return 'Tsh 0.00'; // No record, no calculation
                             if (!$record->relationLoaded('shopsFunded')) {
@@ -110,10 +117,12 @@ class UwekezajiResource extends Resource
         ]);
 }
 
+
+
 public static function table(Table $table): Table
 {
     return $table
-        ->query(BusinessInvestment::query()->with('shopsFunded')) // Eager load shopsFunded
+        //->query(BusinessInvestment::query()->with('shopsFunded.assignedWakalas')) // Eager load shopsFunded
         ->columns([
             TextColumn::make('investment_date')->label('Tarehe')->date('d M Y')->sortable()->searchable(),
             TextColumn::make('initial_investment_amount')->label('Kiasi cha Uwekezaji')->money('TZS')->sortable()->badge()->color('success'),
@@ -193,14 +202,24 @@ public static function infolist(Infolist $infolist): Infolist
                                     TextEntry::make('total_initial_float') // Using the Shop accessor directly
                                         ->label('Jumla ya Float Kuanzia (Dukani)')
                                         ->money('TZS')->badge()->color('success'),
-                                    TextEntry::make('assignedWakalas.name')->label('Mawakala wa Duka')->badge()->separator(', ')->placeholder('--'),
+                                        TextEntry::make('assignedWakalas.name')
+                                            ->label('Mawakala wa Duka')
+                                            ->state(function (Shop $shopRecord) {
+                                                // Explicitly load the agents for this specific shop
+                                                // and return their names.
+                                                return $shopRecord->assignedWakalas()->pluck('name')->implode(', ');
+                                            })
+                                            ->badge()
+                                            ->separator(', ')
+                                            // Use `placeholder()` for when the state returns an empty string
+                                            ->placeholder('Hakuna wakala aliyesajiliwa'),
                                 ]),
                         ]),
 
                     // Overall Summary for THIS investment's funded shops
                     InfolistGrid::make(2)->schema([
                         TextEntry::make('calculated_total_cash_from_investment')
-                            ->label('Jumla ya Taslimu Iliyogawiwa na Uwekezaji Huu')
+                            ->label('Jumla ya Fedha Taslimu Iliyogawiwa na Uwekezaji Huu')
                             ->money('TZS')
                             ->state(function(BusinessInvestment $record){
                                 return $record->shopsFunded->sum('initial_cash_on_hand');
@@ -225,7 +244,7 @@ public static function infolist(Infolist $infolist): Infolist
                                   return $totalCash + $totalFloat;
                               }),
                         TextEntry::make('calculated_remaining_from_investment')
-                            ->label('Salio la Uwekezaji Huu')
+                            ->label('Salio Baki la Uwekezaji Huu')
                             ->money('TZS')->color('warning')
                             ->state(function(BusinessInvestment $record){
                                 $totalCash = $record->shopsFunded->sum('initial_cash_on_hand');
