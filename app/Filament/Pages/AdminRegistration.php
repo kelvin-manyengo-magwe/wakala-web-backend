@@ -122,6 +122,24 @@ class AdminRegistration extends Page implements HasForms
 
             Log::info("Msimamizi mpya (admin) amesajiliwa: {$user->name}, {$user->email}, Simu: {$user->phone_no}");
 
+
+            // Notify all OTHER admins about this new registration
+                      $otherAdmins = User::whereHas('roles', fn ($q) => $q->where('name', 'admin'))
+                                       ->where('id', '!=', $user->id) // Exclude the new admin themselves
+                                       ->get();
+
+                    if ($otherAdmins->isNotEmpty()) {
+                         $notification = Notification::make()
+                             ->title('Msimamizi Mpya Amejiunga!')
+                             ->body("{$user->name} amekamilisha usajili wa akaunti ya msimamizi.")
+                             ->icon('heroicon-o-user-plus')
+                             ->info();
+
+                             foreach ($otherAdmins as $admin) {
+                                 $notification->sendToDatabase($admin);
+                     }
+                 }
+
             // Attempt to send the welcome SMS
             try {
                 $smsService = app(SmsService::class); // Resolve using service container

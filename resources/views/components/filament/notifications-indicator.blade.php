@@ -1,28 +1,31 @@
-{{-- resources/views/components/filament/notifications-indicator.blade.php --}}
+
 @php
-    // In a real app, you'd fetch the unread notification count for the logged-in admin user
-    // For now, let's simulate it or assume it's passed.
-    // Example: $unreadCount = auth()->user()->unreadNotifications()->count();
-    $unreadCount = 3; // Placeholder for unread count
+    // The data is now provided by AppServiceProvider, not hardcoded.
+    // We access it via the shared 'unreadNotificationsCount'.
+    $unreadCount = Filament::getShared('unreadNotificationsCount');
 @endphp
 
+@if(auth()->check())
 <div class="relative flex items-center" x-data="{ isOpen: false }">
-    <button
-        @click="isOpen = !isOpen"
-        type="button"
-        class="relative rounded-full p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-600 focus:bg-gray-100 focus:text-gray-600 focus:outline-none dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-300 dark:focus:bg-gray-800 dark:focus:text-gray-300 transition"
-        aria-label="Taarifa" {{-- "Notifications" --}}
+    <a href="{{ \App\Filament\Pages\UserNotifications::getUrl() }}"
+       class="relative rounded-full p-1.5 text-gray-500 hover:bg-gray-100 focus:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 focus:outline-none transition-colors duration-200"
+       aria-label="Taarifa"
     >
         {{-- Bell Icon --}}
         <x-heroicon-o-bell class="h-6 w-6" />
 
-        {{-- Unread Count Badge --}}
+        {{-- VISUALLY APPEALING CUE: Glowing Pulse and Badge --}}
         @if ($unreadCount > 0)
-            <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs font-semibold text-white">
-                {{ $unreadCount > 9 ? '9+' : $unreadCount }}
+            {{-- A subtle ping animation that plays once when the page loads --}}
+            <span class="absolute right-1 top-1.5 h-3 w-3 rounded-full bg-primary-600 opacity-75 animate-ping"></span>
+
+            {{-- The bright badge with the count --}}
+            <span class="absolute right-1 top-1.5 flex h-3 w-3 items-center justify-center rounded-full bg-primary-500 text-[9px] font-bold text-white">
             </span>
         @endif
-    </button>
+    </a>
+</div>
+@endif
 
     {{-- Dropdown Placeholder (Can be expanded into a full notification list) --}}
     <div

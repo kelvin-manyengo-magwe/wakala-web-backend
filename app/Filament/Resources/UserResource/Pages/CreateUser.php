@@ -16,7 +16,8 @@ class CreateUser extends CreateRecord
 {
     protected static string $resource = UserResource::class;
 
-    {
+
+     protected function afterCreate(): void  {
         $createdWakala = $this->record;
 
         // Part 1: Your existing SMS logic (which is great)
