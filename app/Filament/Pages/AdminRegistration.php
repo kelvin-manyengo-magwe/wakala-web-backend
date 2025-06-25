@@ -125,8 +125,8 @@ class AdminRegistration extends Page implements HasForms
             // Attempt to send the welcome SMS
             try {
                 $smsService = app(SmsService::class); // Resolve using service container
-                $appName = config('app.name', 'WakalaPro'); // Get your app name
-                $message = "Karibu sana Bwana/Bibi {$user->name} kwenye {$appName}! Akaunti yako ya Usimamizi Mkuu imeundwa na ipo tayari kutumika. Furahia huduma!";
+
+                $message = "Karibu sana Bwana/Bibi {$user->name} kwenye mfumo wa WakalaTel! Akaunti yako ya Usimamizi Mkuu imeundwa na ipo tayari kutumika. Furahia huduma!";
 
                 if ($smsService->sendSms($user->phone_no, $message)) {
                     Log::info("SMS ya kukaribisha imetumwa kwa msimamizi {$user->name} namba {$user->phone_no}.");

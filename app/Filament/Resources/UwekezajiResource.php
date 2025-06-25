@@ -37,7 +37,7 @@ class UwekezajiResource extends Resource
     protected static ?int $navigationSort = 1;
     protected static ?string $recordTitleAttribute = 'investment_date'; // Display formatted date if possible
 
-    public static function getNavigationLabel(): string { return 'Uwekezaji & Mgawanyo'; } // "Investment & Distribution"
+    public static function getNavigationLabel(): string { return 'Uwekezaji na Mgawanyo'; } // "Investment & Distribution"
     public static function getPluralModelLabel(): string { return 'Rekodi za Uwekezaji'; } // "Investment Records"
     public static function getModelLabel(): string { return 'Uwekezaji'; } // "Investment"
 
