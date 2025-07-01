@@ -196,7 +196,7 @@ class DukaResource extends Resource
 
                 TextColumn::make('initial_cash_on_hand')->label('Taslimu ya Kuanzia')->money('TZS')->sortable()->badge()->color('success'),
                 TextColumn::make('mno_allocations_summary')
-                    ->label('Float za MNO (Kuanzia)')
+                    ->label('Floti ya Mitandao (Kuanzia)')
                     ->getStateUsing(function (Shop $record) {
                         if (empty($record->mno_initial_allocations)) return 'Hakuna taarifa';
                         return collect($record->mno_initial_allocations)

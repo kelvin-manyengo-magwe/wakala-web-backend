@@ -9,7 +9,7 @@ use Carbon\Carbon;
 
 class MnoSharePieChartWidget extends ChartWidget
 {
-    protected static ?string $heading = 'Mgao wa Miamala kwa MNO (Jumla)'; // Swahili: Transaction Share per MNO (Total)
+    protected static ?string $heading = 'Mgao wa Miamala kwa Mitandao ya Simu (Jumla)'; // Swahili: Transaction Share per MNO (Total)
     protected static ?string $pollingInterval = '120s'; // Refresh less frequently for totals
     protected static bool $isLazy = true;
     protected int | string | array $columnSpan = 1; // Default to 1
