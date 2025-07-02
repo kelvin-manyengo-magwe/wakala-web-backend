@@ -113,7 +113,29 @@ class HalotelTransactionResource extends Resource
                 TextColumn::make('date')->dateTime()->sortable()->label('Tarehe'),
                 TextColumn::make('ref_no')->searchable()->label('Namba Unukuzi'),
                 TextColumn::make('customer.name')->searchable()->label('Mteja'),
-                TextColumn::make('type.name')->label('Aina'),
+
+                TextColumn::make('type.name')
+                        ->label('Aina')
+                        ->badge() // This will put the text in a nice-looking colored badge
+                        ->formatStateUsing(function (string $state): string {
+                            // This function checks the value from the database and returns the Swahili equivalent.
+                            if (strtolower($state) === 'deposit') {
+                                return 'Kuweka'; // "Deposit" becomes "Weka"
+                            }
+                            if (strtolower($state) === 'withdrawal') {
+                                return 'Kutoa'; // "Withdrawal" becomes "Toa"
+                            }
+                            // As a fallback, just return the original value capitalized.
+                            return ucfirst($state);
+                        })
+                        ->color(fn (string $state): string => match (strtolower($state)) {
+                            // This function sets the color of the badge based on the type.
+                            'deposit' => 'success', // "Weka" will be green
+                            'withdrawal' => 'danger',   // "Toa" will be red
+                            default => 'gray',          // Any other type will be gray
+                        }),
+
+
                 TextColumn::make('amount')->money('TZS')->sortable()->label('Kiasi'),
                 TextColumn::make('commission')->money('TZS')->sortable()->label('Kamisheni'),
                 TextColumn::make('user.name')->label('Wakala')->searchable(),
