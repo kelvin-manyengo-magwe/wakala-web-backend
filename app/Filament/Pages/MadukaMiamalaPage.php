@@ -72,6 +72,22 @@ class MadukaMiamalaPage extends Page implements HasForms
             ->columns(3); // Layout filters in a row
     }
 
+
+            public function getTransactionTypeInfo(string $typeName): array
+          {
+              $type = strtolower($typeName);
+
+              if ($type === 'deposit') {
+                  return ['label' => 'Kuweka', 'color' => 'success'];
+              }
+
+              if ($type === 'withdrawal') {
+                  return ['label' => 'Kutoa', 'color' => 'danger'];
+              }
+
+              return ['label' => ucfirst($type), 'color' => 'gray'];
+              }
+
     // Livewire hooks for when filter properties change
     public function updatedSelectedShopId($value): void { $this->loadShopTransactions(); }
     public function updatedStartDate($value): void { $this->loadShopTransactions(); }

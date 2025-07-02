@@ -109,7 +109,7 @@ class AirtelTransactionResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('date')->dateTime()->sortable()->label('Tarehe'),
-                TextColumn::make('ref_no')->searchable()->label('Namba Unukuzi'),
+                TextColumn::make('ref_no')->searchable()->label('Namba Unukuzi (Kumbukumbu)'),
                 TextColumn::make('customer.name')->searchable()->label('Mteja'),
 
 
@@ -135,7 +135,7 @@ class AirtelTransactionResource extends Resource
                         }),
                 TextColumn::make('amount')->money('TZS')->sortable()->label('Kiasi'),
                 TextColumn::make('commission')->money('TZS')->sortable()->label('Kamisheni'),
-                TextColumn::make('user.name')->label('Wakala')->searchable(),
+                TextColumn::make('user.name')->label('Wakala')->badge()->searchable(),
                 TextColumn::make('shop.name')->label('Duka')->searchable()->sortable()->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('float_balance')->label('Float Baada ya Muamala')->money('TZS')->sortable()->toggleable(isToggledHiddenByDefault: true),
@@ -146,6 +146,7 @@ class AirtelTransactionResource extends Resource
             ->filters([
                     SelectFilter::make('shop_id')
                         ->label('Chuja kwa Duka')
+
                         ->relationship('shop', 'name')
                         ->searchable()->preload(),
                     SelectFilter::make('user_id') // Filters by the Wakala who processed/synced
