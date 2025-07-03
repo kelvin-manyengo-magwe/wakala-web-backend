@@ -21,6 +21,10 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Section;
 use App\Models\BusinessInvestment;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Grid;
+
+
 
 
 
@@ -52,17 +56,46 @@ class DukaResource extends Resource
                     TextInput::make('name')->label('Jina la Duka/Eneo la Wakala')->columnSpanFull(),
 
 
-                    Select::make('business_investment_id')
-                            ->label('Chanzo cha Uwekezaji wa Kuanzia') // "Source of Initial Investment"
-                            ->relationship('fundingInvestment', 'investment_date') // Uses the fundingInvestment() relationship from Shop model
-                            ->getOptionLabelFromRecordUsing(fn (BusinessInvestment $record) =>
-                                "Tarehe: " . $record->investment_date->format('d M Y') . " - Kiasi: Tsh " . number_format($record->initial_investment_amount,0)
-                            )
-                            ->searchable(['investment_date', 'initial_investment_amount']) // Search by these investment fields
-                            ->preload()
-                            ->required() // A shop should probably be linked to an investment source
-                            ->helperText('Chagua uwekezaji mkuu uliotumika kuanzisha duka hili.')
-                            ->columnSpanFull(),
+                    Grid::make(1)->schema([
+                     Forms\Components\Radio::make('funding_source_type')
+                         ->label('Chagua Chanzo cha Mtaji')
+                         ->options([
+                             'existing_investment' => 'Tumia Uwekezaji Uliopo',
+                             'new_investment' => 'Weka Kiasi cha Kipekee kwa Duka Hili',
+                         ])
+                         // **THE FIX**: We REMOVE ->inline() to make the options vertical.
+                         ->default('existing_investment')->live(),
+                 ])->columnSpanFull()->extraAttributes(['class' => 'mt-4']), // Add top margin for spacing
+
+                 // We wrap the conditional fields in another Grid to give them proper spacing.
+                 Grid::make(1)->schema([
+                     Select::make('business_investment_id')
+                         ->label('Chagua Uwekezaji Uliopo')
+                         ->searchable()->preload()
+                         ->options(function () {
+                             // The working options logic from before
+                             return BusinessInvestment::with('shopsFunded')->get()
+                                 ->filter(fn ($investment) => $investment->remaining_amount > 1)
+                                 ->mapWithKeys(function ($investment) {
+                                     $label = sprintf(
+                                         "Tarehe: %s | Salio Baki: %s TZS",
+                                         $investment->investment_date->format('d M Y'),
+                                         number_format($investment->remaining_amount, 2)
+                                     );
+                                     return [$investment->id => $label];
+                                 });
+                         })
+                         ->placeholder('Tafadhali chagua uwekezaji...')
+                         ->visible(fn (\Filament\Forms\Get $get): bool => $get('funding_source_type') === 'existing_investment'),
+
+                     TextInput::make('new_investment_amount')
+                         ->label('Andika Kiasi cha Uwekezaji wa Kipekee')
+                         ->numeric()->prefix('Tsh')->minValue(1)
+                         ->helperText('Weka kiasi cha pesa kwa ajili ya duka hili pekee.')
+                         ->visible(fn (\Filament\Forms\Get $get): bool => $get('funding_source_type') === 'new_investment'),
+                 ])->columnSpanFull()->extraAttributes(['class' => 'mt-2']), // Add a little space
+
+
 
 
                     FileUpload::make('image_path') // Field name matches database column

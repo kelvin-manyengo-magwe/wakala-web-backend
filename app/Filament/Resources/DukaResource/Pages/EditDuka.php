@@ -6,7 +6,7 @@ use App\Filament\Resources\DukaResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use App\Models\Device;
-
+use App\Models\BusinessInvestment;
 
 class EditDuka extends EditRecord
 {
@@ -17,6 +17,24 @@ class EditDuka extends EditRecord
         return [
             Actions\DeleteAction::make(),
         ];
+    }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        if (isset($data['funding_source_type']) && $data['funding_source_type'] === 'new_investment') {
+            if (!empty($data['new_investment_amount'])) {
+                $newInvestment = BusinessInvestment::create([
+                    'initial_investment_amount' => $data['new_investment_amount'],
+                    'investment_date' => now(),
+                    'notes' => 'Uwekezaji (kutoka kuhariri duka): ' . ($data['name'] ?? $this->record->name),
+                ]);
+                $data['business_investment_id'] = $newInvestment->id;
+            }
+        }
+
+        unset($data['funding_source_type'], $data['new_investment_amount']);
+
+        return $data;
     }
 
     protected function afterSave(): void

@@ -55,9 +55,9 @@ class AppServiceProvider extends ServiceProvider
 
 
 
-        if (request()->isSecure() || str_contains($host, parse_url($appUrl, PHP_URL_HOST)) ) {
+        /*if (request()->isSecure() || str_contains($host, parse_url($appUrl, PHP_URL_HOST)) ) {
             URL::forceScheme('https');
-        }
+        }*/
 
     }
 }

@@ -6,6 +6,9 @@ use App\Filament\Resources\DukaResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use App\Models\Device; // Ensure your Device model is imported for relationship syncing
+use App\Models\BusinessInvestment;
+
+
 
 class CreateDuka extends CreateRecord
 {
@@ -33,28 +36,31 @@ class CreateDuka extends CreateRecord
      * We use it to extract relationship data and remove those temporary keys
      * from the data that will be used to create the Shop itself.
      */
-    protected function mutateFormDataBeforeCreate(array $data): array
+     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        // Extract the IDs for the 'assignedWakalas' relationship.
-        // 'assignedWakalas_create_ids' is the name of your Select field for the create form.
-        if (isset($data['assignedWakalas_create_ids'])) {
-            $this->syncableWakalas = (array) $data['assignedWakalas_create_ids'];
-            unset($data['assignedWakalas_create_ids']); // Remove it so it's not passed to Shop::create()
+        if (isset($data['funding_source_type']) && $data['funding_source_type'] === 'new_investment') {
+            if (!empty($data['new_investment_amount'])) {
+                $newInvestment = BusinessInvestment::create([
+                    'initial_investment_amount' => $data['new_investment_amount'],
+                    'investment_date' => now(),
+                    'notes' => 'Uwekezaji wa kipekee kwa duka: ' . ($data['name'] ?? 'Duka Jipya'),
+                ]);
+                $data['business_investment_id'] = $newInvestment->id;
+            }
         }
 
-        // Extract the IDs for the 'devices' relationship.
-        // 'devices_create_ids' is the name of your Select field for the create form.
-        if (isset($data['devices_create_ids'])) {
-            $this->syncableDevices = (array) $data['devices_create_ids'];
-            unset($data['devices_create_ids']); // Remove it
+        unset($data['funding_source_type'], $data['new_investment_amount']);
+
+        if (isset($data['assignedWakalas'])) {
+            $this->syncableWakalas = (array) $data['assignedWakalas'];
+            unset($data['assignedWakalas']);
+        }
+        if (isset($data['devices'])) {
+            $this->syncableDevices = (array) $data['devices'];
+            unset($data['devices']);
         }
 
-        // Ensure defaults for fields that might be missing if not filled but have DB defaults or are fillable
-        $data['initial_cash_on_hand'] = $data['initial_cash_on_hand'] ?? 0;
-        $data['mno_initial_allocations'] = $data['mno_initial_allocations'] ?? [];
-        $data['is_active'] = $data['is_active'] ?? true;
-
-        return $data; // Return the modified data for Shop creation
+        return $data;
     }
 
     /**

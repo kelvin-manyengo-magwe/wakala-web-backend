@@ -35,4 +35,23 @@ class BusinessInvestment extends Model
     {
         return $this->hasMany(Shop::class, 'business_investment_id', 'id');
     }
+
+    public function getRemainingAmountAttribute(): float
+      {
+          // Ensure the shops relationship is loaded for calculation. This is efficient.
+          $this->loadMissing('shopsFunded');
+
+          // Calculate the total cash and float allocated to shops already funded by this investment.
+          $totalCashAllocated = $this->shopsFunded->sum('initial_cash_on_hand');
+
+          // This relies on the 'total_initial_float' accessor existing on your Shop model.
+          // It sums the 'initial_float_allocated' from the JSON field for each shop.
+          $totalFloatAllocated = $this->shopsFunded->sum('total_initial_float');
+
+          $totalAllocated = $totalCashAllocated + $totalFloatAllocated;
+
+          return (float) $this->initial_investment_amount - $totalAllocated;
+      }
+
+
 }
